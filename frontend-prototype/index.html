@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>表达练习室 · 产品交互原型</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#setup" aria-label="表达练习室首页">
+          <span class="brand-mark">叙</span>
+          <span>
+            <strong>表达练习室</strong>
+            <small>把想说的，讲清楚</small>
+          </span>
+        </a>
+        <div class="topbar-meta">
+          <span class="local-badge"><i></i> 本地演示模式</span>
+          <button class="quiet-button" type="button" data-action="reset">重置演示</button>
+        </div>
+      </header>
+
+      <section id="setup-view" class="view setup-view" aria-labelledby="setup-title">
+        <div class="intro-copy">
+          <p class="eyebrow">一场练习，从一个清晰的主题开始</p>
+          <h1 id="setup-title">今天，想把什么<br /><em>说清楚？</em></h1>
+          <p class="intro-description">选择一个真实场景，带着结构开口。练习中只提醒你下一步该说什么。</p>
+        </div>
+
+        <div class="setup-card">
+          <div class="section-heading">
+            <div>
+              <span class="step-label">01</span>
+              <h2>选择练习场景</h2>
+            </div>
+            <span class="required-note">必选</span>
+          </div>
+          <div id="scene-grid" class="scene-grid" role="list"></div>
+
+          <div class="form-divider"></div>
+
+          <div class="section-heading compact-heading">
+            <div>
+              <span class="step-label">02</span>
+              <h2>给这次练习一个主题</h2>
+            </div>
+            <span class="optional-note">建议填写</span>
+          </div>
+          <label class="topic-field">
+            <span class="sr-only">练习主题</span>
+            <input id="topic-input" type="text" maxlength="80" placeholder="例如：如何推动一个跨部门项目" autocomplete="off" />
+            <span id="topic-count" class="input-count">0 / 80</span>
+          </label>
+
+          <div class="form-divider short-divider"></div>
+
+          <div class="form-row">
+            <div>
+              <div class="field-label"><span>目标时长</span><small>给自己一个收束的边界</small></div>
+              <div id="duration-options" class="duration-options" role="group" aria-label="目标时长"></div>
+            </div>
+            <div class="structure-preview">
+              <span class="field-label">表达结构</span>
+              <strong id="structure-name">PREP</strong>
+              <span id="structure-description">观点 → 原因 → 例子/证据 → 总结</span>
+            </div>
+          </div>
+
+          <div class="setup-footer">
+            <p><span class="sparkle">✦</span> 练习过程中不会上传你的原始表达</p>
+            <button id="start-button" class="primary-button" type="button" disabled>
+              开始这次练习 <span>→</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="practice-view" class="view practice-view is-hidden" aria-labelledby="practice-title">
+        <div class="practice-header">
+          <button class="back-button" type="button" data-action="back-to-setup">← 返回设置</button>
+          <div class="practice-context">
+            <span id="practice-scene">面试回答</span>
+            <span class="context-dot">·</span>
+            <strong id="practice-topic">如何推动一个跨部门项目</strong>
+          </div>
+          <div class="recording-status"><i></i><span id="recording-label">表达中</span><span id="timer">00:00</span></div>
+        </div>
+
+        <div class="practice-layout">
+          <aside class="practice-rail">
+            <div class="rail-label">本次结构</div>
+            <div id="practice-steps" class="practice-steps"></div>
+            <div class="rail-note">
+              <span class="note-icon">✦</span>
+              <p>不用一次说完。<br /><strong>跟着下一步走。</strong></p>
+            </div>
+          </aside>
+
+          <div class="transcript-stage">
+            <div class="stage-topline">
+              <span class="live-caption"><i></i> 实时字幕</span>
+              <span class="offline-note">无需 AI 也能完成练习</span>
+            </div>
+            <div id="transcript" class="transcript" aria-live="polite">
+              <p class="transcript-placeholder">准备好后，按下开始表达</p>
+            </div>
+            <div class="stage-footer">
+              <span id="word-count">0 字</span>
+              <span class="footer-separator">/</span>
+              <span id="pause-count">0 次停顿</span>
+            </div>
+          </div>
+
+          <aside class="coach-panel">
+            <div class="coach-kicker">下一步</div>
+            <div class="coach-icon">↗</div>
+            <h2 id="coach-hint">先交代情境或任务</h2>
+            <p id="coach-subtext">不必完美，先把事情发生的背景说出来。</p>
+            <button id="simulate-button" class="secondary-button" type="button">模拟说一句 <span>⌘ ↵</span></button>
+            <div class="coach-divider"></div>
+            <div class="coach-stat-row"><span>表达密度</span><strong id="density-stat">—</strong></div>
+            <div class="coach-stat-row"><span>填充词</span><strong id="filler-stat">0</strong></div>
+          </aside>
+        </div>
+
+        <div class="practice-controls">
+          <button id="pause-button" class="control-button" type="button"><span>Ⅱ</span> 暂停</button>
+          <button id="end-button" class="end-button" type="button">结束练习 <span>↗</span></button>
+          <span class="control-hint">空格键暂停 · 点击结束查看报告</span>
+        </div>
+      </section>
+
+      <section id="report-view" class="view report-view is-hidden" aria-labelledby="report-title">
+        <div class="report-topbar">
+          <button class="back-button" type="button" data-action="back-to-setup">← 再练一次</button>
+          <span class="report-label">练习回顾 · <span id="report-date">今天</span></span>
+          <button class="quiet-button" type="button" data-action="reset">退出报告</button>
+        </div>
+
+        <div class="report-heading">
+          <p class="eyebrow">你已经完成一次表达练习</p>
+          <h1 id="report-title">这次，你把事情讲到了哪里？</h1>
+          <p id="report-context" class="report-context">面试回答 · 如何推动一个跨部门项目</p>
+        </div>
+
+        <div class="report-grid">
+          <div class="score-card">
+            <span class="card-kicker">结构完整度</span>
+            <div class="score-number"><strong id="score-number">50</strong><span>/ 100</span></div>
+            <div class="score-meter"><i id="score-meter-fill"></i></div>
+            <p id="score-caption">已经有清晰骨架，结果部分还可以更具体。</p>
+          </div>
+          <div class="report-card stages-card">
+            <div class="card-heading"><span class="card-kicker">四段表达</span><span id="completed-count">1 / 4 已完成</span></div>
+            <div id="report-stages" class="report-stages"></div>
+          </div>
+          <div class="report-card metric-card">
+            <div class="card-heading"><span class="card-kicker">这次练习</span><span class="muted-label">实时统计</span></div>
+            <div class="metric-list">
+              <div><span>表达时长</span><strong id="report-duration">00:42</strong></div>
+              <div><span>总字数</span><strong id="report-words">86</strong></div>
+              <div><span>填充词</span><strong id="report-fillers">2</strong></div>
+              <div><span>最长停顿</span><strong id="report-longest-pause">1.4s</strong></div>
+            </div>
+          </div>
+          <div class="next-action-card">
+            <div>
+              <span class="card-kicker">下一次，只改一件事</span>
+              <h2 id="next-action-title">把结果说具体</h2>
+              <p id="next-action-description">不要停在“效果很好”。补上数字、时间或对方的变化，让你的行动真正落地。</p>
+            </div>
+            <span class="action-arrow">↗</span>
+          </div>
+        </div>
+
+        <div class="report-footer">
+          <div class="report-quote"><span>“</span><p id="report-quote-text">当时项目需要在两周内完成，这是整个团队面对的关键任务。</p></div>
+          <button class="primary-button" type="button" data-action="back-to-setup">再练一次 <span>→</span></button>
+        </div>
+      </section>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
