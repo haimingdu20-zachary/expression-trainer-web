@@ -175,9 +175,31 @@
           </div>
         </div>
 
+        <div id="comparison-panel" class="report-card comparison-panel is-hidden" aria-live="polite">
+          <div class="card-heading"><span class="card-kicker">两次表达对比</span><span class="muted-label">第二次练习</span></div>
+          <div class="comparison-grid">
+            <div><span>结构完整度</span><strong id="comparison-score">—</strong><small id="comparison-score-delta">—</small></div>
+            <div><span>表达字数</span><strong id="comparison-words">—</strong><small id="comparison-words-delta">—</small></div>
+            <div><span>填充词</span><strong id="comparison-fillers">—</strong><small id="comparison-fillers-delta">—</small></div>
+          </div>
+          <p id="comparison-caption" class="comparison-caption">再看一遍两次表达，找到最值得保留的变化。</p>
+        </div>
+
+        <div id="followup-panel" class="next-action-card followup-panel is-hidden" aria-live="polite">
+          <div>
+            <span class="card-kicker">AI 追问 · 模拟</span>
+            <h2 id="followup-question">如果只能保留一个动作，你会保留什么？</h2>
+            <p id="followup-answer">下一次可以直接回答这个问题，让你的表达从复盘走向更具体的判断。</p>
+          </div>
+          <span class="action-arrow">?</span>
+        </div>
+
         <div class="report-footer">
           <div class="report-quote"><span>“</span><p id="report-quote-text">当时项目需要在两周内完成，这是整个团队面对的关键任务。</p></div>
-          <button class="primary-button" type="button" data-action="back-to-setup">再练一次 <span>→</span></button>
+          <div class="report-actions">
+            <button class="secondary-button" type="button" data-action="ask-followup">获取一个追问 <span>?</span></button>
+            <button class="primary-button" type="button" data-action="start-rerecord">再录一次并对比 <span>→</span></button>
+          </div>
         </div>
       </section>
     </main>

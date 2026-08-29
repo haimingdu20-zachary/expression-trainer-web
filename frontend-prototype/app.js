@@ -24,7 +24,9 @@ const state = {
   words: 0,
   fillers: 0,
   pauses: 0,
-  transcript: []
+  transcript: [],
+  attempt: 1,
+  firstAttempt: null
 };
 
 const $ = selector => document.querySelector(selector);
@@ -119,6 +121,8 @@ function startTimer() {
 
 function startPractice() {
   if (!state.topic) return showToast('先给这次练习写一个主题');
+  state.attempt = 1;
+  state.firstAttempt = null;
   resetSession();
   const scene = currentScene();
   $('#practice-scene').textContent = scene.name;
@@ -137,6 +141,15 @@ const MOCK_LINES = [
   '最后我们提前两天上线，交付周期缩短了约百分之二十。',
   '这次让我意识到，越复杂的项目越需要先把目标说清楚。'
 ];
+
+const FOLLOWUP_QUESTIONS = {
+  idea: '如果只能保留一个理由，哪个理由最能支撑你的观点？',
+  interview: '如果再来一次，你会在哪个行动上做得更好？',
+  work: '这个结果对团队或业务带来的最大变化是什么？',
+  meeting: '如果今天只能做一个决定，你建议现在定下什么？',
+  persuasion: '对方最可能担心什么，你准备如何回应？',
+  improv: '如果听众只记住一句话，你希望是哪一句？'
+};
 
 function simulateSentence() {
   if (state.isPaused) return showToast('当前已暂停，继续后再说一句');
@@ -171,6 +184,9 @@ function finishPractice() {
   const scene = currentScene();
   const completed = Math.max(1, state.stageIndex);
   const score = Math.round((completed / scene.stages.length) * 100);
+  if (state.attempt === 1) {
+    state.firstAttempt = { score, words: state.words || 86, fillers: state.fillers || 2, completed };
+  }
   $('#report-context').textContent = `${scene.name} · ${state.topic}`;
   $('#score-number').textContent = String(score);
   $('#score-meter-fill').style.width = `${score}%`;
@@ -184,7 +200,46 @@ function finishPractice() {
   $('#report-quote-text').textContent = state.transcript[0] || '当时项目需要在两周内完成，这是整个团队面对的关键任务。';
   $('#next-action-title').textContent = completed >= 3 ? '把收尾说得更有力' : '把下一段说具体';
   $('#next-action-description').textContent = completed >= 3 ? '最后不要只说“所以就这样”。用一句行动或结果，把这次表达稳稳收住。' : '不要停在“效果很好”。补上数字、时间或对方的变化，让你的行动真正落地。';
+  $('#followup-panel').classList.add('is-hidden');
+  const comparisonPanel = $('#comparison-panel');
+  if (state.attempt > 1 && state.firstAttempt) {
+    const scoreDelta = score - state.firstAttempt.score;
+    const wordsDelta = (state.words || 86) - state.firstAttempt.words;
+    const fillersDelta = (state.fillers || 2) - state.firstAttempt.fillers;
+    $('#comparison-score').textContent = `${score} / 100`;
+    $('#comparison-score-delta').textContent = `${scoreDelta >= 0 ? '+' : ''}${scoreDelta} 分`;
+    $('#comparison-words').textContent = `${state.words || 86} 字`;
+    $('#comparison-words-delta').textContent = `${wordsDelta >= 0 ? '+' : ''}${wordsDelta} 字`;
+    $('#comparison-fillers').textContent = String(state.fillers || 2);
+    $('#comparison-fillers-delta').textContent = `${fillersDelta <= 0 ? '' : '+'}${fillersDelta} 个`;
+    $('#comparison-caption').textContent = scoreDelta > 0 ? '结构更完整了。下一次继续保留这次的开场方式。' : '先保留这次最清楚的一段，再逐步补齐其他阶段。';
+    comparisonPanel.classList.remove('is-hidden');
+  } else {
+    comparisonPanel.classList.add('is-hidden');
+  }
   setView('report');
+}
+
+function showFollowup() {
+  const scene = currentScene();
+  $('#followup-question').textContent = FOLLOWUP_QUESTIONS[scene.id] || '如果再来一次，你会把哪一段说得更具体？';
+  $('#followup-answer').textContent = '这是本地演示中的模拟追问。下一次可以直接回答它，让你的表达从复盘走向更具体的判断。';
+  $('#followup-panel').classList.remove('is-hidden');
+  showToast('已生成一个针对本次场景的追问');
+}
+
+function startRerecord() {
+  state.attempt = 2;
+  resetSession();
+  const scene = currentScene();
+  $('#practice-scene').textContent = scene.name;
+  $('#practice-topic').textContent = state.topic;
+  $('#coach-hint').textContent = scene.hint;
+  $('#coach-subtext').textContent = '这是第二次表达，试着把刚才的建议用进去。';
+  renderPracticeSteps();
+  setView('practice');
+  startTimer();
+  showToast('第二次练习开始，结束后会看到两次对比');
 }
 
 function showToast(message) {
@@ -199,6 +254,8 @@ function resetDemo() {
   clearInterval(timerId);
   state.sceneId = 'interview';
   state.duration = 180;
+  state.attempt = 1;
+  state.firstAttempt = null;
   $('#topic-input').value = '';
   updateTopicCount();
   renderSceneOptions();
@@ -225,9 +282,13 @@ document.addEventListener('keydown', event => {
 });
 $$('[data-action="back-to-setup"]').forEach(button => button.addEventListener('click', () => {
   clearInterval(timerId);
+  state.attempt = 1;
+  state.firstAttempt = null;
   setView('setup');
 }));
 $$('[data-action="reset"]').forEach(button => button.addEventListener('click', resetDemo));
+$$('[data-action="ask-followup"]').forEach(button => button.addEventListener('click', showFollowup));
+$$('[data-action="start-rerecord"]').forEach(button => button.addEventListener('click', startRerecord));
 
 renderSceneOptions();
 renderDurationOptions();
