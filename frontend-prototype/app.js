@@ -116,10 +116,41 @@ function renderHistory() {
   const records = readHistory();
   $('#history-count').textContent = `${records.length} 次练习`;
   if (!records.length) {
+    $('#progress-summary').classList.add('is-hidden');
+    $('#progress-panel').classList.add('is-hidden');
     $('#history-list').innerHTML = '<div class="history-empty"><span>✦</span><h2>还没有训练记录</h2><p>完成第一次练习后，这里会留下你的表达轨迹。</p><button class="primary-button" type="button" data-action="back-to-setup">开始第一次练习 <span>→</span></button></div>';
     $('#history-list').querySelector('[data-action="back-to-setup"]').addEventListener('click', () => setView('setup'));
     return;
   }
+  const scoredRecords = records.filter(record => Number.isFinite(Number(record.score)));
+  if (!scoredRecords.length) {
+    $('#progress-summary').classList.add('is-hidden');
+    $('#progress-panel').classList.add('is-hidden');
+  }
+  const scores = scoredRecords.map(record => Number(record.score));
+  if (!scores.length) {
+    $('#history-list').innerHTML = records.map(record => `
+      <article class="history-item">
+        <div class="history-item-main"><span class="history-date">${escapeHtml(record.date)}</span><h2>${escapeHtml(record.topic)}</h2><p>${escapeHtml(record.scene)} · ${escapeHtml(record.focus)}</p></div>
+        <div class="history-item-score"><strong>—</strong><span>/ 100</span><small>暂无分数</small></div>
+      </article>`).join('');
+    return;
+  }
+  const average = Math.round(scores.reduce((total, score) => total + score, 0) / scores.length);
+  const best = Math.max(...scores);
+  const recentChange = scores.length > 1 ? scores[0] - scores[1] : 0;
+  $('#summary-sessions').textContent = String(records.length);
+  $('#summary-average').textContent = String(average);
+  $('#summary-best').textContent = String(best);
+  $('#summary-change').textContent = recentChange > 0 ? `+${recentChange}` : String(recentChange);
+  $('#progress-summary').classList.remove('is-hidden');
+  const trendRecords = scoredRecords.slice(0, 6).reverse();
+  $('#progress-chart').innerHTML = trendRecords.map((record, index) => {
+    const score = Math.max(0, Math.min(100, Number(record.score) || 0));
+    return `<div class="progress-bar-column"><div class="progress-bar-value">${score}</div><div class="progress-bar-track"><i style="height: ${Math.max(score, 8)}%"></i></div><small>第 ${records.length - trendRecords.length + index + 1} 次</small></div>`;
+  }).join('');
+  $('#progress-caption').textContent = recentChange > 0 ? `最近一次比上一次高 ${recentChange} 分，继续保留这次的开场方式。` : recentChange < 0 ? `最近一次比上一次低 ${Math.abs(recentChange)} 分，先找回最稳定的表达结构。` : '最近两次分数持平，可以开始关注表达的具体程度。';
+  $('#progress-panel').classList.remove('is-hidden');
   $('#history-list').innerHTML = records.map(record => `
     <article class="history-item">
       <div class="history-item-main">

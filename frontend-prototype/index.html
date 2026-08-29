@@ -229,6 +229,19 @@
           <p>记录只保存在当前浏览器中，先用来观察哪些场景正在变得更顺。</p>
         </div>
 
+        <div id="progress-summary" class="progress-summary is-hidden" aria-live="polite">
+          <div><span>累计练习</span><strong id="summary-sessions">0</strong><small>次</small></div>
+          <div><span>平均结构分</span><strong id="summary-average">0</strong><small>分</small></div>
+          <div><span>最高结构分</span><strong id="summary-best">0</strong><small>分</small></div>
+          <div><span>最近变化</span><strong id="summary-change">—</strong><small>分</small></div>
+        </div>
+
+        <div id="progress-panel" class="report-card progress-panel is-hidden">
+          <div class="card-heading"><span class="card-kicker">结构分趋势</span><span class="muted-label">最近 6 次练习</span></div>
+          <div id="progress-chart" class="progress-chart" aria-label="最近训练结构分趋势"></div>
+          <p id="progress-caption" class="comparison-caption">完成更多次练习后，这里会显示你的变化。</p>
+        </div>
+
         <div id="history-list" class="history-list" aria-live="polite"></div>
       </section>
     </main>
