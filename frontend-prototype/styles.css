@@ -157,6 +157,21 @@ h1, h2, p { margin-top: 0; }
 .next-action-card h2 { margin: 13px 0 7px; font-family: Georgia, serif; font-size: 28px; font-weight: 400; letter-spacing: -.04em; }
 .next-action-card p { max-width: 620px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .action-arrow { color: var(--mint-deep); font-size: 34px; }
+.logic-panel { grid-column: 1 / -1; min-height: 0; }
+.logic-chain { display: flex; align-items: stretch; margin-top: 27px; }
+.logic-node { position: relative; flex: 1; min-height: 92px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfa; }
+.logic-node.done { border-color: #b8d3c0; background: #eff8f1; }
+.logic-node.current { border-color: var(--coral); background: var(--coral-soft); }
+.logic-index, .logic-node strong, .logic-node small { display: block; }
+.logic-index { color: #a0aaa2; font-family: Georgia, serif; font-size: 13px; font-style: italic; }
+.logic-node strong { margin-top: 13px; font-size: 12px; }
+.logic-node small { margin-top: 7px; color: var(--muted); font-size: 10px; }
+.logic-node.done small { color: var(--mint-deep); }
+.logic-node.current small { color: var(--coral); }
+.logic-connector { display: grid; width: 33px; place-items: center; color: #aab8ae; font-size: 18px; }
+.logic-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px; padding-top: 16px; border-top: 1px solid #eef1ed; }
+.logic-summary div { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; }
+.logic-summary strong { color: var(--ink); font-size: 11px; }
 .comparison-panel { grid-column: 1 / -1; min-height: 0; padding-bottom: 21px; }
 .comparison-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 21px; }
 .comparison-grid > div { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid #eef1ed; color: var(--muted); font-size: 11px; }
@@ -223,6 +238,10 @@ h1, h2, p { margin-top: 0; }
   .control-hint { position: static; width: 100%; text-align: center; }
   .report-grid { grid-template-columns: 1fr; }
   .next-action-card { grid-column: auto; }
+  .logic-panel { grid-column: auto; }
+  .logic-chain { overflow-x: auto; padding-bottom: 5px; }
+  .logic-node { min-width: 145px; }
+  .logic-summary { grid-template-columns: 1fr; gap: 10px; }
   .comparison-panel, .followup-panel { grid-column: auto; }
   .comparison-grid { grid-template-columns: 1fr; gap: 0; }
   .report-heading { padding: 42px 0 28px; text-align: left; }

@@ -86,6 +86,19 @@ function formatTime(totalSeconds) {
   return `${minutes}:${seconds}`;
 }
 
+function renderLogicChain(scene, completed) {
+  $('#logic-chain').innerHTML = scene.stages.map((label, index) => `
+    <div class="logic-node ${index < completed ? 'done' : index === completed ? 'current' : ''}">
+      <span class="logic-index">0${index + 1}</span>
+      <strong>${label}</strong>
+      <small>${index < completed ? '已覆盖' : index === completed ? '下一步' : '待补充'}</small>
+    </div>`).join('<span class="logic-connector" aria-hidden="true">→</span>');
+  const conclusionTime = Math.min(Math.max(state.seconds, 8), 15);
+  $('#report-conclusion-time').textContent = formatTime(conclusionTime);
+  $('#report-evidence-status').textContent = completed >= Math.min(3, scene.stages.length) ? '已出现' : '待补充';
+  $('#report-focus').textContent = completed >= scene.stages.length ? '让结论更有力' : `补充${scene.stages[completed] || '具体结果'}`;
+}
+
 function setView(view) {
   ['setup', 'practice', 'report'].forEach(name => $(`#${name}-view`).classList.toggle('is-hidden', name !== view));
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -193,6 +206,7 @@ function finishPractice() {
   $('#score-caption').textContent = score >= 100 ? '四段结构完整，可以继续练习表达的锋利度。' : '已经有清晰骨架，继续把下一段说具体。';
   $('#completed-count').textContent = `${completed} / ${scene.stages.length} 已完成`;
   $('#report-stages').innerHTML = scene.stages.map((label, index) => `<div class="report-stage ${index < completed ? 'done' : ''}"><span class="check">${index < completed ? '✓' : '○'}</span><span>${label}</span></div>`).join('');
+  renderLogicChain(scene, completed);
   $('#report-duration').textContent = formatTime(Math.max(state.seconds, 42));
   $('#report-words').textContent = String(state.words || 86);
   $('#report-fillers').textContent = String(state.fillers || 2);
