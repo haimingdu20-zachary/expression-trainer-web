@@ -18,7 +18,7 @@
         </a>
         <div class="topbar-meta">
           <span class="local-badge"><i></i> 本地演示模式</span>
-          <button class="quiet-button" type="button" data-action="reset">重置演示</button>
+          <button class="quiet-button" type="button" data-action="show-history">训练记录</button>
         </div>
       </header>
 
@@ -136,7 +136,7 @@
         <div class="report-topbar">
           <button class="back-button" type="button" data-action="back-to-setup">← 再练一次</button>
           <span class="report-label">练习回顾 · <span id="report-date">今天</span></span>
-          <button class="quiet-button" type="button" data-action="reset">退出报告</button>
+          <button class="quiet-button" type="button" data-action="show-history">训练记录</button>
         </div>
 
         <div class="report-heading">
@@ -214,6 +214,22 @@
             <button class="primary-button" type="button" data-action="start-rerecord">再录一次并对比 <span>→</span></button>
           </div>
         </div>
+      </section>
+
+      <section id="history-view" class="view history-view is-hidden" aria-labelledby="history-title">
+        <div class="history-topbar">
+          <button class="back-button" type="button" data-action="back-to-setup">← 返回练习</button>
+          <span class="report-label">训练记录 · 本地保存</span>
+          <span id="history-count" class="muted-label">0 次练习</span>
+        </div>
+
+        <div class="history-heading">
+          <p class="eyebrow">把每次表达留下来</p>
+          <h1 id="history-title">你正在形成自己的表达轨迹。</h1>
+          <p>记录只保存在当前浏览器中，先用来观察哪些场景正在变得更顺。</p>
+        </div>
+
+        <div id="history-list" class="history-list" aria-live="polite"></div>
       </section>
     </main>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>

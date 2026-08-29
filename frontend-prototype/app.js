@@ -14,6 +14,8 @@ const DURATIONS = [
   { value: 300, label: '5 分钟' }
 ];
 
+const HISTORY_KEY = 'expression-practice-history';
+
 const state = {
   sceneId: 'interview',
   duration: 180,
@@ -88,6 +90,47 @@ function formatTime(totalSeconds) {
   return `${minutes}:${seconds}`;
 }
 
+function readHistory() {
+  try {
+    const records = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    return Array.isArray(records) ? records : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+}
+
+function saveHistory(record) {
+  try {
+    const records = [record, ...readHistory()].slice(0, 20);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(records));
+  } catch (error) {
+    showToast('本地记录暂时无法保存');
+  }
+}
+
+function renderHistory() {
+  const records = readHistory();
+  $('#history-count').textContent = `${records.length} 次练习`;
+  if (!records.length) {
+    $('#history-list').innerHTML = '<div class="history-empty"><span>✦</span><h2>还没有训练记录</h2><p>完成第一次练习后，这里会留下你的表达轨迹。</p><button class="primary-button" type="button" data-action="back-to-setup">开始第一次练习 <span>→</span></button></div>';
+    $('#history-list').querySelector('[data-action="back-to-setup"]').addEventListener('click', () => setView('setup'));
+    return;
+  }
+  $('#history-list').innerHTML = records.map(record => `
+    <article class="history-item">
+      <div class="history-item-main">
+        <span class="history-date">${escapeHtml(record.date)}</span>
+        <h2>${escapeHtml(record.topic)}</h2>
+        <p>${escapeHtml(record.scene)} · ${escapeHtml(record.focus)}</p>
+      </div>
+      <div class="history-item-score"><strong>${escapeHtml(record.score)}</strong><span>/ 100</span><small>${escapeHtml(record.words)} 字 · ${escapeHtml(record.duration)}</small></div>
+    </article>`).join('');
+}
+
 function renderLogicChain(scene, completed) {
   $('#logic-chain').innerHTML = scene.stages.map((label, index) => `
     <div class="logic-node ${index < completed ? 'done' : index === completed ? 'current' : ''}">
@@ -102,7 +145,7 @@ function renderLogicChain(scene, completed) {
 }
 
 function setView(view) {
-  ['setup', 'practice', 'report'].forEach(name => $(`#${name}-view`).classList.toggle('is-hidden', name !== view));
+  ['setup', 'practice', 'report', 'history'].forEach(name => $(`#${name}-view`).classList.toggle('is-hidden', name !== view));
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -240,6 +283,17 @@ function finishPractice() {
   $('#report-quote-text').textContent = state.transcript[0] || '当时项目需要在两周内完成，这是整个团队面对的关键任务。';
   $('#next-action-title').textContent = completed >= 3 ? '把收尾说得更有力' : '把下一段说具体';
   $('#next-action-description').textContent = completed >= 3 ? '最后不要只说“所以就这样”。用一句行动或结果，把这次表达稳稳收住。' : '不要停在“效果很好”。补上数字、时间或对方的变化，让你的行动真正落地。';
+  if (state.attempt === 1) {
+    saveHistory({
+      date: '刚刚',
+      scene: scene.name,
+      topic: state.topic,
+      score,
+      words: state.words || 86,
+      duration: formatTime(Math.max(state.seconds, 42)),
+      focus: completed >= scene.stages.length ? '让结论更有力' : `补充${scene.stages[completed] || '具体结果'}`
+    });
+  }
   $('#followup-panel').classList.add('is-hidden');
   const comparisonPanel = $('#comparison-panel');
   if (state.attempt > 1 && state.firstAttempt) {
@@ -267,6 +321,12 @@ function showFollowup() {
   renderFollowup(scene);
   $('#followup-panel').classList.remove('is-hidden');
   showToast('已生成一个针对本次场景的追问');
+}
+
+function showHistory() {
+  clearInterval(timerId);
+  renderHistory();
+  setView('history');
 }
 
 function renderFollowup(scene = currentScene()) {
@@ -364,6 +424,7 @@ $$('[data-action="back-to-setup"]').forEach(button => button.addEventListener('c
   setView('setup');
 }));
 $$('[data-action="reset"]').forEach(button => button.addEventListener('click', resetDemo));
+$$('[data-action="show-history"]').forEach(button => button.addEventListener('click', showHistory));
 $$('[data-action="ask-followup"]').forEach(button => button.addEventListener('click', showFollowup));
 $$('[data-action="start-rerecord"]').forEach(button => button.addEventListener('click', startRerecord));
 $$('[data-action="next-followup"]').forEach(button => button.addEventListener('click', advanceFollowup));
