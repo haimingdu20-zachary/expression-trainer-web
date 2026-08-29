@@ -197,9 +197,12 @@
 
         <div id="followup-panel" class="next-action-card followup-panel is-hidden" aria-live="polite">
           <div>
-            <span class="card-kicker">AI 追问 · 模拟</span>
+            <div class="followup-meta"><span id="followup-kicker" class="card-kicker">AI 追问 · 模拟</span><span id="followup-round" class="muted-label">第 1 / 3 轮</span></div>
             <h2 id="followup-question">如果只能保留一个动作，你会保留什么？</h2>
             <p id="followup-answer">下一次可以直接回答这个问题，让你的表达从复盘走向更具体的判断。</p>
+            <div class="followup-controls">
+              <button id="followup-next" class="secondary-button" type="button" data-action="next-followup">模拟回答并继续 <span>→</span></button>
+            </div>
           </div>
           <span class="action-arrow">?</span>
         </div>

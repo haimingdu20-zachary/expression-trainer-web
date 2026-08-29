@@ -26,7 +26,9 @@ const state = {
   pauses: 0,
   transcript: [],
   attempt: 1,
-  firstAttempt: null
+  firstAttempt: null,
+  followupIndex: 0,
+  followupComplete: false
 };
 
 const $ = selector => document.querySelector(selector);
@@ -156,12 +158,36 @@ const MOCK_LINES = [
 ];
 
 const FOLLOWUP_QUESTIONS = {
-  idea: '如果只能保留一个理由，哪个理由最能支撑你的观点？',
-  interview: '如果再来一次，你会在哪个行动上做得更好？',
-  work: '这个结果对团队或业务带来的最大变化是什么？',
-  meeting: '如果今天只能做一个决定，你建议现在定下什么？',
-  persuasion: '对方最可能担心什么，你准备如何回应？',
-  improv: '如果听众只记住一句话，你希望是哪一句？'
+  idea: [
+    { type: 'AI 追问 · 模拟', question: '如果只能保留一个理由，哪个理由最能支撑你的观点？', response: '先挑一个最有解释力的理由，不要把所有背景都重新讲一遍。' },
+    { type: 'AI 追问 · 模拟', question: '这个观点在什么情况下可能不成立？', response: '承认边界，再说明你为什么仍然坚持当前判断。' },
+    { type: '反驳训练 · 模拟', question: '有人说“这只是你的个人偏好”，你会怎么回应？', response: '用一个具体例子或可观察的结果，把偏好翻译成依据。' }
+  ],
+  interview: [
+    { type: 'AI 追问 · 模拟', question: '如果再来一次，你会在哪个行动上做得更好？', response: '先说一个可执行的改进动作，再说明它会带来什么变化。' },
+    { type: 'AI 追问 · 模拟', question: '这个结果中，哪一部分最能证明你的贡献？', response: '把你的动作和结果一一对应，避免只说“我们完成了”。' },
+    { type: '反驳训练 · 模拟', question: '如果面试官认为这只是团队功劳，你会怎么回应？', response: '先承认协作，再清楚说明你负责的关键环节。' }
+  ],
+  work: [
+    { type: 'AI 追问 · 模拟', question: '这个结果对团队或业务带来的最大变化是什么？', response: '补充一个结果指标，让听众知道这件事为什么重要。' },
+    { type: 'AI 追问 · 模拟', question: '如果资源减少一半，你会优先保留哪件事？', response: '用优先级回应，而不是重新罗列全部工作。' },
+    { type: '反驳训练 · 模拟', question: '有人说“这个进展还不足以说明问题”，你怎么回应？', response: '承认现阶段边界，再给出下一步验证计划。' }
+  ],
+  meeting: [
+    { type: 'AI 追问 · 模拟', question: '如果今天只能做一个决定，你建议现在定下什么？', response: '把建议说成一个明确动作，并点出不决定的成本。' },
+    { type: 'AI 追问 · 模拟', question: '这个方案会影响谁，最需要提前同步谁？', response: '说清影响对象和同步动作，推动讨论进入执行。' },
+    { type: '反驳训练 · 模拟', question: '有人不同意你的判断，你会先回应哪一个担忧？', response: '先复述对方的担忧，再用事实和方案回应。' }
+  ],
+  persuasion: [
+    { type: 'AI 追问 · 模拟', question: '对方最可能担心什么，你准备如何回应？', response: '先接住对方的顾虑，再说明你的方案如何降低风险。' },
+    { type: 'AI 追问 · 模拟', question: '如果对方暂时不接受，你希望他先做哪一步？', response: '把完整主张拆成一个低成本、可验证的下一步。' },
+    { type: '反驳训练 · 模拟', question: '对方说“现在没有必要改变”，你会怎么回应？', response: '用变化的成本或错过的机会，回应“为什么是现在”。' }
+  ],
+  improv: [
+    { type: 'AI 追问 · 模拟', question: '如果听众只记住一句话，你希望是哪一句？', response: '重新说一遍核心回答，让它成为这次表达的锚点。' },
+    { type: 'AI 追问 · 模拟', question: '请用一个例子证明刚才的判断。', response: '选择最短、最具体的例子，不要再扩展新的分支。' },
+    { type: '反驳训练 · 模拟', question: '如果有人立即提出相反观点，你先怎么接？', response: '先确认分歧点，再用一句理由稳住自己的立场。' }
+  ]
 };
 
 function simulateSentence() {
@@ -236,10 +262,45 @@ function finishPractice() {
 
 function showFollowup() {
   const scene = currentScene();
-  $('#followup-question').textContent = FOLLOWUP_QUESTIONS[scene.id] || '如果再来一次，你会把哪一段说得更具体？';
-  $('#followup-answer').textContent = '这是本地演示中的模拟追问。下一次可以直接回答它，让你的表达从复盘走向更具体的判断。';
+  state.followupIndex = 0;
+  state.followupComplete = false;
+  renderFollowup(scene);
   $('#followup-panel').classList.remove('is-hidden');
   showToast('已生成一个针对本次场景的追问');
+}
+
+function renderFollowup(scene = currentScene()) {
+  const rounds = FOLLOWUP_QUESTIONS[scene.id] || [];
+  const round = rounds[state.followupIndex];
+  if (!round || state.followupComplete) {
+    $('#followup-kicker').textContent = '追问链路 · 已完成';
+    $('#followup-round').textContent = '3 / 3 轮完成';
+    $('#followup-question').textContent = '这条表达链路已经走完，下一次可以直接练习回应质疑。';
+    $('#followup-answer').textContent = '你已经完成两轮追问和一轮反驳训练。回到练习设置，可以换一个真实主题继续。';
+    $('#followup-next').textContent = '本轮已完成';
+    $('#followup-next').disabled = true;
+    return;
+  }
+  $('#followup-kicker').textContent = round.type;
+  $('#followup-round').textContent = `第 ${state.followupIndex + 1} / ${rounds.length} 轮`;
+  $('#followup-question').textContent = round.question;
+  $('#followup-answer').textContent = `模拟回应提示：${round.response}`;
+  $('#followup-next').disabled = false;
+  $('#followup-next').textContent = state.followupIndex === rounds.length - 1 ? '模拟回答并完成' : '模拟回答并继续';
+}
+
+function advanceFollowup() {
+  if (state.followupComplete) return;
+  const rounds = FOLLOWUP_QUESTIONS[currentScene().id] || [];
+  if (state.followupIndex >= rounds.length - 1) {
+    state.followupComplete = true;
+    renderFollowup();
+    showToast('追问和反驳训练已完成');
+    return;
+  }
+  state.followupIndex += 1;
+  renderFollowup();
+  showToast('已进入下一轮追问');
 }
 
 function startRerecord() {
@@ -270,6 +331,8 @@ function resetDemo() {
   state.duration = 180;
   state.attempt = 1;
   state.firstAttempt = null;
+  state.followupIndex = 0;
+  state.followupComplete = false;
   $('#topic-input').value = '';
   updateTopicCount();
   renderSceneOptions();
@@ -303,6 +366,7 @@ $$('[data-action="back-to-setup"]').forEach(button => button.addEventListener('c
 $$('[data-action="reset"]').forEach(button => button.addEventListener('click', resetDemo));
 $$('[data-action="ask-followup"]').forEach(button => button.addEventListener('click', showFollowup));
 $$('[data-action="start-rerecord"]').forEach(button => button.addEventListener('click', startRerecord));
+$$('[data-action="next-followup"]').forEach(button => button.addEventListener('click', advanceFollowup));
 
 renderSceneOptions();
 renderDurationOptions();
