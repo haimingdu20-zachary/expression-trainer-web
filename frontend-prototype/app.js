@@ -7,6 +7,15 @@ const SCENES = [
   { id: 'improv', icon: '✦', name: '即兴表达', short: '快速组织回答', structure: '即兴结构', description: '明确回答 → 两个理由 → 具体例子 → 简短收尾', stages: ['明确回答', '两个理由', '具体例子', '收尾'], hint: '先明确回答', subtext: '先回答，再展开。不要让听众猜你的立场。', hints: ['先明确回答', '补充两个理由', '给一个具体例子', '简短收尾'] }
 ];
 
+const SCENE_PROMPTS = {
+  idea: ['我为什么支持这个方案？', '一个值得坚持的工作习惯', '如何向新人解释一个复杂概念'],
+  interview: ['讲一次你解决困难的经历', '你如何推动一次跨部门协作？', '一次没有达到预期的项目复盘'],
+  work: ['本周项目进展与下一步计划', '一个需要争取资源的工作事项', '这季度最值得汇报的成果'],
+  meeting: ['我建议今天决定什么？', '如何回应一个会议中的分歧？', '一个需要团队共识的问题'],
+  persuasion: ['为什么现在应该改变这个流程？', '如何说服团队尝试一个新工具？', '一次需要争取支持的提案'],
+  improv: ['你怎么看待远程办公？', '最近学到的一个有用方法', '如果重新选择一次，你会怎么做？']
+};
+
 const DURATIONS = [
   { value: 60, label: '1 分钟' },
   { value: 120, label: '2 分钟' },
@@ -67,6 +76,17 @@ function renderStructure() {
   const scene = currentScene();
   $('#structure-name').textContent = scene.structure;
   $('#structure-description').textContent = scene.description;
+  renderPromptSuggestions();
+}
+
+function renderPromptSuggestions() {
+  const prompts = SCENE_PROMPTS[state.sceneId] || [];
+  $('#prompt-suggestions').innerHTML = prompts.map(prompt => `<button class="prompt-suggestion" type="button" data-prompt="${escapeHtml(prompt)}" role="listitem">${escapeHtml(prompt)} <span>↗</span></button>`).join('');
+  $$('#prompt-suggestions [data-prompt]').forEach(button => button.addEventListener('click', () => {
+    $('#topic-input').value = button.dataset.prompt;
+    updateTopicCount();
+    $('#topic-input').focus();
+  }));
 }
 
 function renderPracticeSteps(target = state.stageIndex) {
