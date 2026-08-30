@@ -440,6 +440,25 @@ function reportSummaryText() {
   ].join('\n');
 }
 
+function downloadReport() {
+  try {
+    const report = `${reportSummaryText()}\n\n表达结构：${currentScene().description}\n练习时长：${$('#report-duration').textContent}\n填充词：${$('#report-fillers').textContent}\n最长停顿：${$('#report-longest-pause').textContent}`;
+    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    const safeTopic = state.topic.replace(/[^\w\u4e00-\u9fff-]+/g, '-').slice(0, 24) || '表达练习';
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = `${safeTopic}-练习报告.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showToast('报告已下载');
+  } catch (error) {
+    showToast('当前环境无法下载报告');
+  }
+}
+
 async function copyReport() {
   const summary = reportSummaryText();
   try {
@@ -575,6 +594,7 @@ $$('[data-action="reset"]').forEach(button => button.addEventListener('click', r
 $$('[data-action="show-history"]').forEach(button => button.addEventListener('click', showHistory));
 $$('[data-action="apply-plan"]').forEach(button => button.addEventListener('click', applyTrainingPlan));
 $$('[data-action="copy-report"]').forEach(button => button.addEventListener('click', copyReport));
+$$('[data-action="download-report"]').forEach(button => button.addEventListener('click', downloadReport));
 $$('[data-action="ask-followup"]').forEach(button => button.addEventListener('click', showFollowup));
 $$('[data-action="start-rerecord"]').forEach(button => button.addEventListener('click', startRerecord));
 $$('[data-action="next-followup"]').forEach(button => button.addEventListener('click', advanceFollowup));
