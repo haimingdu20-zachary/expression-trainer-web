@@ -203,6 +203,7 @@ h1, h2, p { margin-top: 0; }
 .report-quote > span { color: var(--coral); font-family: Georgia, serif; font-size: 38px; line-height: .7; }
 .report-quote p { margin: 0; color: var(--muted); font-family: Georgia, serif; font-size: 16px; line-height: 1.6; }
 .report-actions { display: flex; align-items: center; gap: 9px; }
+.report-copy-button { white-space: nowrap; }
 .report-actions .secondary-button { width: auto; min-width: 142px; margin: 0; }
 .report-actions .primary-button { min-width: 176px; }
 .history-view { max-width: 980px; margin: 0 auto; padding-top: 0; }

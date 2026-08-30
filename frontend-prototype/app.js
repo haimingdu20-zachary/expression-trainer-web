@@ -413,6 +413,41 @@ function showHistory() {
   setView('history');
 }
 
+function reportSummaryText() {
+  return [
+    '表达练习报告',
+    `场景：${currentScene().name}`,
+    `主题：${state.topic}`,
+    `结构完整度：${$('#score-number').textContent} / 100`,
+    `表达节奏：${$('#report-speed').textContent} 字 / 分钟`,
+    `改进重点：${$('#report-focus').textContent}`,
+    `下一步建议：${$('#next-action-title').textContent}`,
+    `原话摘录：${$('#report-quote-text').textContent}`
+  ].join('\n');
+}
+
+async function copyReport() {
+  const summary = reportSummaryText();
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(summary);
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = summary;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand('copy');
+      textarea.remove();
+      if (!copied) throw new Error('copy failed');
+    }
+    showToast('报告摘要已复制');
+  } catch (error) {
+    showToast('当前环境无法复制，请手动记录报告内容');
+  }
+}
+
 function applyTrainingPlan() {
   const record = readHistory()[0];
   if (!record) return setView('setup');
@@ -523,6 +558,7 @@ $$('[data-action="back-to-setup"]').forEach(button => button.addEventListener('c
 $$('[data-action="reset"]').forEach(button => button.addEventListener('click', resetDemo));
 $$('[data-action="show-history"]').forEach(button => button.addEventListener('click', showHistory));
 $$('[data-action="apply-plan"]').forEach(button => button.addEventListener('click', applyTrainingPlan));
+$$('[data-action="copy-report"]').forEach(button => button.addEventListener('click', copyReport));
 $$('[data-action="ask-followup"]').forEach(button => button.addEventListener('click', showFollowup));
 $$('[data-action="start-rerecord"]').forEach(button => button.addEventListener('click', startRerecord));
 $$('[data-action="next-followup"]').forEach(button => button.addEventListener('click', advanceFollowup));
