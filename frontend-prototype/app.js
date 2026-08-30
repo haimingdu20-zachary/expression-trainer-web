@@ -208,6 +208,24 @@ function renderLogicChain(scene, completed) {
   $('#report-focus').textContent = completed >= scene.stages.length ? '让结论更有力' : `补充${scene.stages[completed] || '具体结果'}`;
 }
 
+function renderRhythm(scene, completed) {
+  const duration = Math.max(state.seconds, 42);
+  const words = state.words || 86;
+  const speed = Math.round((words / duration) * 60);
+  const pausePattern = state.pauses >= 3 ? '停顿偏多' : state.pauses === 2 ? '节奏稳定' : '可再停顿';
+  const emphasis = completed >= scene.stages.length ? '强调结果' : `强调${scene.stages[completed] || '结论'}`;
+  const meter = Math.max(18, Math.min(100, Math.round((speed / 180) * 100)));
+  $('#report-speed').textContent = String(speed);
+  $('#report-pause-pattern').textContent = pausePattern;
+  $('#report-emphasis').textContent = emphasis;
+  $('#report-rhythm-meter').style.width = `${meter}%`;
+  $('#report-rhythm-caption').textContent = speed > 155
+    ? '语速略快，下一次在结构切换处多留半秒，让重点更容易被听见。'
+    : state.pauses < 2
+      ? '可以在结论和证据之间增加一次短停顿，让听众跟上你的思路。'
+      : '当前节奏比较稳定，下一次继续把停顿留给真正重要的转折。';
+}
+
 function setView(view) {
   ['setup', 'practice', 'report', 'history'].forEach(name => $(`#${name}-view`).classList.toggle('is-hidden', name !== view));
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -340,6 +358,7 @@ function finishPractice() {
   $('#completed-count').textContent = `${completed} / ${scene.stages.length} 已完成`;
   $('#report-stages').innerHTML = scene.stages.map((label, index) => `<div class="report-stage ${index < completed ? 'done' : ''}"><span class="check">${index < completed ? '✓' : '○'}</span><span>${label}</span></div>`).join('');
   renderLogicChain(scene, completed);
+  renderRhythm(scene, completed);
   $('#report-duration').textContent = formatTime(Math.max(state.seconds, 42));
   $('#report-words').textContent = String(state.words || 86);
   $('#report-fillers').textContent = String(state.fillers || 2);
