@@ -31,6 +31,7 @@ const state = {
   topic: '',
   stageIndex: 0,
   isPaused: false,
+  timeReached: false,
   seconds: 0,
   words: 0,
   fillers: 0,
@@ -234,12 +235,14 @@ function setView(view) {
 function resetSession() {
   state.stageIndex = 0;
   state.isPaused = false;
+  state.timeReached = false;
   state.seconds = 0;
   state.words = 0;
   state.fillers = 0;
   state.pauses = 0;
   state.transcript = [];
   $('#timer').textContent = '00:00';
+  $('#timer').classList.remove('time-reached');
   $('#recording-label').textContent = '表达中';
   $('#transcript').innerHTML = '<p class="transcript-placeholder">准备好后，按下开始表达</p>';
   $('#word-count').textContent = '0 字';
@@ -254,6 +257,16 @@ function startTimer() {
   timerId = setInterval(() => {
     if (!state.isPaused) {
       state.seconds += 1;
+      if (state.seconds >= state.duration) {
+        state.seconds = state.duration;
+        state.timeReached = true;
+        state.isPaused = true;
+        $('#recording-label').textContent = '时间到';
+        $('#timer').classList.add('time-reached');
+        $('#pause-button').innerHTML = '<span>✓</span> 已到时长';
+        showToast('目标时长已到，可以结束练习查看报告');
+        clearInterval(timerId);
+      }
       $('#timer').textContent = formatTime(state.seconds);
     }
   }, 1000);
@@ -267,6 +280,7 @@ function startPractice() {
   const scene = currentScene();
   $('#practice-scene').textContent = scene.name;
   $('#practice-topic').textContent = state.topic;
+  $('#target-duration').textContent = formatTime(state.duration);
   $('#coach-hint').textContent = scene.hint;
   $('#coach-subtext').textContent = scene.subtext;
   renderPracticeSteps();
@@ -501,6 +515,7 @@ function startRerecord() {
   const scene = currentScene();
   $('#practice-scene').textContent = scene.name;
   $('#practice-topic').textContent = state.topic;
+  $('#target-duration').textContent = formatTime(state.duration);
   $('#coach-hint').textContent = scene.hint;
   $('#coach-subtext').textContent = '这是第二次表达，试着把刚才的建议用进去。';
   renderPracticeSteps();
@@ -538,6 +553,7 @@ $('#start-button').addEventListener('click', startPractice);
 $('#simulate-button').addEventListener('click', simulateSentence);
 $('#end-button').addEventListener('click', finishPractice);
 $('#pause-button').addEventListener('click', () => {
+  if (state.timeReached) return showToast('目标时长已到，请结束练习查看报告');
   state.isPaused = !state.isPaused;
   $('#pause-button').innerHTML = state.isPaused ? '<span>▶</span> 继续' : '<span>Ⅱ</span> 暂停';
   $('#recording-label').textContent = state.isPaused ? '已暂停' : '表达中';
