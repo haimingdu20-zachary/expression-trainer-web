@@ -218,6 +218,8 @@ h1, h2, p { margin-top: 0; }
 .progress-bar-track i { display: block; width: min(42px, 70%); min-height: 7px; border-radius: 6px 6px 0 0; background: var(--mint-deep); }
 .progress-bar-column:nth-child(odd) .progress-bar-track i { background: var(--coral); }
 .progress-bar-column small { color: #a0aaa2; font-size: 9px; white-space: nowrap; }
+.training-plan { min-height: 0; margin-bottom: 13px; }
+.training-plan .secondary-button { width: auto; min-width: 175px; margin: 18px 0 0; }
 .history-list { display: grid; gap: 10px; }
 .history-item { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 22px 25px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); transition: .2s ease; }
 .history-item:hover { border-color: #b8d3c0; transform: translateY(-1px); }
@@ -301,4 +303,5 @@ h1, h2, p { margin-top: 0; }
   .history-item { align-items: flex-start; padding: 18px; }
   .history-item h2 { font-size: 19px; }
   .history-item-score { min-width: 80px; }
+  .training-plan .secondary-button { width: 100%; }
 }

@@ -132,12 +132,23 @@ function saveHistory(record) {
   }
 }
 
+function renderTrainingPlan(records, recentChange) {
+  const record = records[0];
+  const scene = SCENES.find(item => item.id === record.sceneId) || SCENES.find(item => item.name === record.scene) || currentScene();
+  $('#plan-title').textContent = recentChange < 0 ? `稳住「${scene.name}」的表达结构` : `继续练习「${scene.name}」`;
+  $('#plan-description').textContent = recentChange < 0
+    ? '最近一次分数有回落，先沿用熟悉的主题，把结论和行动完整说完。'
+    : `沿用“${record.topic}”，下一次重点练习${record.focus || '把结果说具体'}。`;
+  $('#training-plan').classList.remove('is-hidden');
+}
+
 function renderHistory() {
   const records = readHistory();
   $('#history-count').textContent = `${records.length} 次练习`;
   if (!records.length) {
     $('#progress-summary').classList.add('is-hidden');
     $('#progress-panel').classList.add('is-hidden');
+    $('#training-plan').classList.add('is-hidden');
     $('#history-list').innerHTML = '<div class="history-empty"><span>✦</span><h2>还没有训练记录</h2><p>完成第一次练习后，这里会留下你的表达轨迹。</p><button class="primary-button" type="button" data-action="back-to-setup">开始第一次练习 <span>→</span></button></div>';
     $('#history-list').querySelector('[data-action="back-to-setup"]').addEventListener('click', () => setView('setup'));
     return;
@@ -146,6 +157,7 @@ function renderHistory() {
   if (!scoredRecords.length) {
     $('#progress-summary').classList.add('is-hidden');
     $('#progress-panel').classList.add('is-hidden');
+    $('#training-plan').classList.add('is-hidden');
   }
   const scores = scoredRecords.map(record => Number(record.score));
   if (!scores.length) {
@@ -171,6 +183,7 @@ function renderHistory() {
   }).join('');
   $('#progress-caption').textContent = recentChange > 0 ? `最近一次比上一次高 ${recentChange} 分，继续保留这次的开场方式。` : recentChange < 0 ? `最近一次比上一次低 ${Math.abs(recentChange)} 分，先找回最稳定的表达结构。` : '最近两次分数持平，可以开始关注表达的具体程度。';
   $('#progress-panel').classList.remove('is-hidden');
+  renderTrainingPlan(records, recentChange);
   $('#history-list').innerHTML = records.map(record => `
     <article class="history-item">
       <div class="history-item-main">
@@ -338,6 +351,7 @@ function finishPractice() {
     saveHistory({
       date: '刚刚',
       scene: scene.name,
+      sceneId: scene.id,
       topic: state.topic,
       score,
       words: state.words || 86,
@@ -378,6 +392,19 @@ function showHistory() {
   clearInterval(timerId);
   renderHistory();
   setView('history');
+}
+
+function applyTrainingPlan() {
+  const record = readHistory()[0];
+  if (!record) return setView('setup');
+  const scene = SCENES.find(item => item.id === record.sceneId) || SCENES.find(item => item.name === record.scene);
+  if (scene) state.sceneId = scene.id;
+  $('#topic-input').value = record.topic || '';
+  renderSceneOptions();
+  renderStructure();
+  updateTopicCount();
+  setView('setup');
+  showToast('已带入上次主题，可以开始下一次练习');
 }
 
 function renderFollowup(scene = currentScene()) {
@@ -476,6 +503,7 @@ $$('[data-action="back-to-setup"]').forEach(button => button.addEventListener('c
 }));
 $$('[data-action="reset"]').forEach(button => button.addEventListener('click', resetDemo));
 $$('[data-action="show-history"]').forEach(button => button.addEventListener('click', showHistory));
+$$('[data-action="apply-plan"]').forEach(button => button.addEventListener('click', applyTrainingPlan));
 $$('[data-action="ask-followup"]').forEach(button => button.addEventListener('click', showFollowup));
 $$('[data-action="start-rerecord"]').forEach(button => button.addEventListener('click', startRerecord));
 $$('[data-action="next-followup"]').forEach(button => button.addEventListener('click', advanceFollowup));
