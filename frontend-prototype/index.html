@@ -43,27 +43,35 @@
             <div class="workspace-toolbar">
               <button class="workspace-secondary-button" type="button" data-action="open-setup">📋 粘贴逐字稿</button>
               <div><span>表达结构</span><strong id="workspace-structure">等待开始</strong></div>
-              <div class="workspace-next-step"><span>下一步</span><strong>等待开始</strong></div>
+              <div class="workspace-next-step"><span>下一步</span><strong id="workspace-next-step">等待开始</strong></div>
             </div>
-            <div class="workspace-transcript"><p>点击下方按钮开始表达</p></div>
+            <div id="workspace-transcript" class="workspace-transcript"><p>点击下方按钮开始表达</p></div>
             <button class="workspace-record-button" type="button" data-action="open-setup">🎙️ 开始录制</button>
           </section>
 
           <aside class="workspace-sidebar feedback-sidebar">
-            <div class="ai-column-heading">
-              <h2>🤖 AI 出题</h2>
-              <span>本地模拟</span>
+            <div class="feedback-heading">
+              <h2>💡 实时反馈</h2>
+              <span id="workspace-feedback-status">等待开始</span>
             </div>
             <div class="workspace-rule"></div>
-            <div class="ai-question-card">
-              <span id="ai-question-kicker" class="ai-question-kicker">根据「面试回答」生成</span>
-              <p id="ai-question">讲一次你解决困难的经历，并说说你从中学到了什么？</p>
-              <div class="ai-question-actions">
-                <button class="ai-secondary-button" type="button" data-action="generate-ai-question">换一道</button>
-                <button class="ai-primary-button" type="button" data-action="use-ai-question">使用这道题 <span>↗</span></button>
+            <div id="workspace-feedback" class="workspace-feedback" aria-live="polite"></div>
+
+            <div class="ai-question-section">
+              <div class="ai-column-heading">
+                <h3>🤖 AI 出题</h3>
+                <span>本地模拟</span>
               </div>
+              <div class="ai-question-card">
+                <span id="ai-question-kicker" class="ai-question-kicker">根据「面试回答」生成</span>
+                <p id="ai-question">讲一次你解决困难的经历，并说说你从中学到了什么？</p>
+                <div class="ai-question-actions">
+                  <button class="ai-secondary-button" type="button" data-action="generate-ai-question">换一道</button>
+                  <button class="ai-primary-button" type="button" data-action="use-ai-question">使用这道题 <span>↗</span></button>
+                </div>
+              </div>
+              <div class="ai-question-note">选择问题后，它会自动带入练习主题，你可以直接开始回答或表达。</div>
             </div>
-            <div class="ai-question-note">选择问题后，它会自动带入练习主题，你可以直接开始回答或表达。</div>
           </aside>
         </div>
       </section>
@@ -175,6 +183,7 @@
             <div class="coach-divider"></div>
             <div class="coach-stat-row"><span>表达密度</span><strong id="density-stat">—</strong></div>
             <div class="coach-stat-row"><span>填充词</span><strong id="filler-stat">0</strong></div>
+            <div id="practice-live-feedback" class="practice-live-feedback" aria-live="polite"></div>
           </aside>
         </div>
 

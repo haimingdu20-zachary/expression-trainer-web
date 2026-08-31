@@ -98,6 +98,7 @@ function renderStructure() {
   $('#workspace-structure').textContent = state.topic ? scene.structure : '等待开始';
   renderPromptSuggestions();
   renderAiQuestion();
+  renderWorkspaceFeedback();
 }
 
 function renderAiQuestion() {
@@ -148,6 +149,8 @@ function updateTopicCount() {
   state.topic = value.trim();
   $('#topic-count').textContent = `${value.length} / 80`;
   $('#start-button').disabled = !state.topic;
+  $('#workspace-structure').textContent = state.topic ? currentScene().structure : '等待开始';
+  updateWorkspaceStats();
 }
 
 function formatTime(totalSeconds) {
@@ -168,6 +171,43 @@ function updateWorkspaceStats() {
   $('#workspace-density').textContent = state.words ? `${Math.max(72, 96 - state.fillers * 4)}%` : '--';
   $('#workspace-speed').textContent = state.seconds ? `${Math.round((state.words / state.seconds) * 60)}` : '--';
   $('#workspace-pause-count').textContent = String(state.pauses);
+  const scene = currentScene();
+  const completed = Math.min(state.stageIndex, scene.stages.length);
+  const nextStage = scene.stages[completed] || '复盘';
+  $('#workspace-next-step').textContent = state.topic ? (completed >= scene.stages.length ? '可结束并复盘' : `补充${nextStage}`) : '等待开始';
+  renderWorkspaceFeedback();
+}
+
+function renderWorkspaceFeedback() {
+  const container = $('#workspace-feedback');
+  const practiceContainer = $('#practice-live-feedback');
+  if (!container) return;
+  const status = $('#workspace-feedback-status');
+  const scene = currentScene();
+  const completed = Math.min(state.stageIndex, scene.stages.length);
+  if (!state.topic) {
+    status.textContent = '等待开始';
+    const emptyMarkup = '<div class="feedback-empty"><strong>还没有开始表达</strong><br />先选择一个问题或主题，开始后这里会实时提示下一步。</div>';
+    container.innerHTML = emptyMarkup;
+    if (practiceContainer) practiceContainer.innerHTML = '';
+    return;
+  }
+  if (!state.transcript.length) {
+    status.textContent = '待开始';
+    const readyMarkup = `<div class="feedback-empty"><strong>主题已准备好</strong><br />点击“开始表达”，先完成「${escapeHtml(scene.stages[0])}」。</div>`;
+    container.innerHTML = readyMarkup;
+    if (practiceContainer) practiceContainer.innerHTML = '<small>开始表达后，这里会同步更新。</small>';
+    return;
+  }
+  status.textContent = '分析中';
+  const feedbackItems = [
+    { label: '结构进度', value: `${completed} / ${scene.stages.length} 段`, note: completed >= scene.stages.length ? '结构已完整' : `下一步：${scene.stages[completed]}` },
+    { label: '表达密度', value: `${Math.max(72, 96 - state.fillers * 4)}%`, note: state.fillers ? '少用“然后、就是”等填充词' : '目前表达比较集中' },
+    { label: '节奏提醒', value: `${state.pauses} 次停顿`, note: state.pauses >= 2 ? '停顿节奏比较稳定' : '在结构切换处留半秒' }
+  ];
+  const feedbackMarkup = feedbackItems.map(item => `<div class="feedback-item"><div><span>${item.label}</span><strong>${item.value}</strong></div><small>${item.note}</small></div>`).join('');
+  container.innerHTML = feedbackMarkup;
+  if (practiceContainer) practiceContainer.innerHTML = `<div class="practice-feedback-title">实时分析</div>${feedbackMarkup}`;
 }
 
 function readHistory() {
@@ -320,6 +360,7 @@ function resetSession() {
   updateTimeProgress();
   $('#recording-label').textContent = '表达中';
   $('#transcript').innerHTML = '<p class="transcript-placeholder">准备好后，按下开始表达</p>';
+  $('#workspace-transcript').innerHTML = '<p>点击下方按钮开始表达</p>';
   $('#begin-expression-button').textContent = '🎙️ 开始表达';
   $('#begin-expression-button').disabled = false;
   $('#word-count').textContent = '0 字';
@@ -454,6 +495,10 @@ function simulateSentence() {
   lineElement.className = 'active-line';
   lineElement.textContent = line;
   transcript.appendChild(lineElement);
+  const workspaceTranscript = $('#workspace-transcript');
+  if (workspaceTranscript) {
+    workspaceTranscript.innerHTML = `<p>${escapeHtml(line)}</p>`;
+  }
   state.transcript.push(line);
   state.words += line.replace(/[^\u4e00-\u9fff\w]/g, '').length;
   state.fillers += state.stageIndex === 1 ? 1 : 0;

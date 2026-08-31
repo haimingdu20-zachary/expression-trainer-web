@@ -133,6 +133,9 @@ h1, h2, p { margin-top: 0; }
 .coach-divider { height: 1px; margin: 30px 0 20px; background: #dce9df; }
 .coach-stat-row { display: flex; justify-content: space-between; padding: 9px 0; color: var(--muted); font-size: 10px; }
 .coach-stat-row strong { color: var(--ink); font-size: 11px; }
+.practice-live-feedback { display: grid; gap: 7px; margin-top: 18px; }
+.practice-live-feedback small { color: #777; font-size: 10px; line-height: 1.6; }
+.practice-feedback-title { margin-bottom: 2px; color: #ed008c; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
 .practice-controls { position: relative; display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 27px; }
 .control-button { padding: 11px 15px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--muted); font-size: 11px; }
 .control-button span { color: var(--coral); font-weight: 700; }
@@ -375,6 +378,18 @@ body { background: #000; color: #ececec; }
 .workspace-record-button { align-self: center; min-width: 190px; margin-top: 21px; padding: 14px 23px; border: 0; border-radius: 999px; background: #ed008c; color: #fff; font-size: 20px; font-weight: 700; box-shadow: 0 8px 25px rgba(237, 0, 140, .2); }
 .workspace-record-button:hover { background: #ff1ba5; }
 .feedback-sidebar { padding-left: 32px; }
+.feedback-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.feedback-heading span { color: #666; font-size: 11px; }
+.workspace-feedback { display: grid; gap: 10px; }
+.feedback-empty { color: #666; font-size: 14px; line-height: 1.8; }
+.feedback-empty strong { color: #aaa; font-size: 16px; font-weight: 500; }
+.feedback-item { padding: 13px 14px; border: 1px solid #303030; border-radius: 9px; background: #101010; }
+.feedback-item > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.feedback-item span { color: #888; font-size: 12px; }
+.feedback-item strong { color: #67baff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 17px; }
+.feedback-item small { display: block; margin-top: 8px; color: #666; font-size: 11px; line-height: 1.5; }
+.ai-question-section { margin-top: 28px; }
+.ai-column-heading h3 { margin: 0; color: #999; font-size: 18px; font-weight: 600; }
 .ai-column-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .ai-column-heading span { color: #666; font-size: 11px; }
 .ai-question-card { padding: 20px 18px; border: 1px solid #3b3b3b; border-radius: 12px; background: #151515; }
