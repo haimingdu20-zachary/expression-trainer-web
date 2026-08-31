@@ -227,6 +227,19 @@ function renderRhythm(scene, completed) {
       : '当前节奏比较稳定，下一次继续把停顿留给真正重要的转折。';
 }
 
+function renderSentenceAnalysis(scene) {
+  const lines = state.transcript;
+  if (!lines.length) {
+    $('#sentence-analysis').innerHTML = '<p class="sentence-empty">本次没有产生可分析的字幕句子，下一次可以先模拟说一句。</p>';
+    return;
+  }
+  $('#sentence-analysis').innerHTML = lines.map((line, index) => {
+    const stage = scene.stages[Math.min(index, scene.stages.length - 1)];
+    const status = index < state.stageIndex ? '已覆盖' : '待确认';
+    return `<div class="sentence-row"><span class="sentence-number">0${index + 1}</span><div class="sentence-copy"><p>${escapeHtml(line)}</p><small>${escapeHtml(stage)} · ${status}</small></div><span class="sentence-arrow">↗</span></div>`;
+  }).join('');
+}
+
 function setView(view) {
   ['setup', 'practice', 'report', 'history'].forEach(name => $(`#${name}-view`).classList.toggle('is-hidden', name !== view));
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -406,6 +419,7 @@ function finishPractice() {
   $('#report-stages').innerHTML = scene.stages.map((label, index) => `<div class="report-stage ${index < completed ? 'done' : ''}"><span class="check">${index < completed ? '✓' : '○'}</span><span>${label}</span></div>`).join('');
   renderLogicChain(scene, completed);
   renderRhythm(scene, completed);
+  renderSentenceAnalysis(scene);
   $('#report-duration').textContent = formatTime(Math.max(state.seconds, 42));
   $('#report-words').textContent = String(state.words || 86);
   $('#report-fillers').textContent = String(state.fillers || 2);
