@@ -201,10 +201,11 @@
 
         <div id="comparison-panel" class="report-card comparison-panel is-hidden" aria-live="polite">
           <div class="card-heading"><span class="card-kicker">两次表达对比</span><span class="muted-label">第二次练习</span></div>
+          <div class="comparison-legend"><span>第一次</span><span>第二次</span></div>
           <div class="comparison-grid">
-            <div><span>结构完整度</span><strong id="comparison-score">—</strong><small id="comparison-score-delta">—</small></div>
-            <div><span>表达字数</span><strong id="comparison-words">—</strong><small id="comparison-words-delta">—</small></div>
-            <div><span>填充词</span><strong id="comparison-fillers">—</strong><small id="comparison-fillers-delta">—</small></div>
+            <div><span>结构完整度</span><div class="comparison-values"><strong id="comparison-before-score">—</strong><b>→</b><strong id="comparison-score">—</strong></div><small id="comparison-score-delta">—</small></div>
+            <div><span>表达字数</span><div class="comparison-values"><strong id="comparison-before-words">—</strong><b>→</b><strong id="comparison-words">—</strong></div><small id="comparison-words-delta">—</small></div>
+            <div><span>填充词</span><div class="comparison-values"><strong id="comparison-before-fillers">—</strong><b>→</b><strong id="comparison-fillers">—</strong></div><small id="comparison-fillers-delta">—</small></div>
           </div>
           <p id="comparison-caption" class="comparison-caption">再看一遍两次表达，找到最值得保留的变化。</p>
         </div>

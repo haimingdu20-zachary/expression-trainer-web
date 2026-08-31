@@ -429,14 +429,19 @@ function finishPractice() {
   $('#followup-panel').classList.add('is-hidden');
   const comparisonPanel = $('#comparison-panel');
   if (state.attempt > 1 && state.firstAttempt) {
+    const currentWords = state.words || 86;
+    const currentFillers = state.fillers || 2;
     const scoreDelta = score - state.firstAttempt.score;
-    const wordsDelta = (state.words || 86) - state.firstAttempt.words;
-    const fillersDelta = (state.fillers || 2) - state.firstAttempt.fillers;
+    const wordsDelta = currentWords - state.firstAttempt.words;
+    const fillersDelta = currentFillers - state.firstAttempt.fillers;
+    $('#comparison-before-score').textContent = String(state.firstAttempt.score);
     $('#comparison-score').textContent = `${score} / 100`;
     $('#comparison-score-delta').textContent = `${scoreDelta >= 0 ? '+' : ''}${scoreDelta} 分`;
-    $('#comparison-words').textContent = `${state.words || 86} 字`;
+    $('#comparison-before-words').textContent = `${state.firstAttempt.words} 字`;
+    $('#comparison-words').textContent = `${currentWords} 字`;
     $('#comparison-words-delta').textContent = `${wordsDelta >= 0 ? '+' : ''}${wordsDelta} 字`;
-    $('#comparison-fillers').textContent = String(state.fillers || 2);
+    $('#comparison-before-fillers').textContent = String(state.firstAttempt.fillers);
+    $('#comparison-fillers').textContent = String(currentFillers);
     $('#comparison-fillers-delta').textContent = `${fillersDelta <= 0 ? '' : '+'}${fillersDelta} 个`;
     $('#comparison-caption').textContent = scoreDelta > 0 ? '结构更完整了。下一次继续保留这次的开场方式。' : '先保留这次最清楚的一段，再逐步补齐其他阶段。';
     comparisonPanel.classList.remove('is-hidden');
