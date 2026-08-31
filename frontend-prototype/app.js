@@ -73,8 +73,16 @@ function renderDurationOptions() {
   }));
 }
 
+function renderStructureOptions() {
+  const select = $('#structure-select');
+  select.innerHTML = SCENES.map(scene => `
+    <option value="${scene.id}">${escapeHtml(scene.name)}：${escapeHtml(scene.structure)} · ${escapeHtml(scene.description)}</option>`).join('');
+  select.value = state.sceneId;
+}
+
 function renderStructure() {
   const scene = currentScene();
+  renderStructureOptions();
   $('#structure-name').textContent = scene.structure;
   $('#structure-description').textContent = scene.description;
   $('#workspace-structure').textContent = state.topic ? scene.structure : '等待开始';
@@ -694,6 +702,11 @@ function resetDemo() {
 }
 
 $('#topic-input').addEventListener('input', updateTopicCount);
+$('#structure-select').addEventListener('change', event => {
+  state.sceneId = event.target.value;
+  renderSceneOptions();
+  renderStructure();
+});
 $('#start-button').addEventListener('click', startPractice);
 $('#simulate-button').addEventListener('click', simulateSentence);
 $('#end-button').addEventListener('click', finishPractice);
