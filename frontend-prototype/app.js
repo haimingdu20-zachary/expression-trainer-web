@@ -33,6 +33,11 @@ const DURATIONS = [
 ];
 
 const HISTORY_KEY = 'expression-practice-history';
+const ANALYSIS_TERMS = {
+  vague: ['这个', '那个', '一些', '很多', '比较', '差不多', '相关', '什么的', '之类的', '可能'],
+  filler: ['然后', '就是', '其实', '那么', '你知道', '怎么说'],
+  hesitation: ['嗯', '呃', '额', '唔', '呜']
+};
 
 const state = {
   sceneId: 'interview',
@@ -50,7 +55,15 @@ const state = {
   firstAttempt: null,
   followupIndex: 0,
   followupComplete: false,
-  aiQuestionIndex: 0
+  aiQuestionIndex: 0,
+  interimTranscript: '',
+  lastFinalAt: null,
+  isListening: false,
+  recognition: null,
+  mediaRecorder: null,
+  audioStream: null,
+  recordedChunks: [],
+  recordingUrl: ''
 };
 
 const $ = selector => document.querySelector(selector);
@@ -165,17 +178,45 @@ function updateTimeProgress() {
 }
 
 function updateWorkspaceStats() {
-  $('#workspace-vague-count').textContent = '0';
-  $('#workspace-filler-count').textContent = String(state.fillers);
-  $('#workspace-hesitation-count').textContent = '0';
-  $('#workspace-density').textContent = state.words ? `${Math.max(72, 96 - state.fillers * 4)}%` : '--';
-  $('#workspace-speed').textContent = state.seconds ? `${Math.round((state.words / state.seconds) * 60)}` : '--';
+  const metrics = calculateMetrics();
+  const finalMetrics = calculateMetrics(false);
+  state.words = finalMetrics.totalChars;
+  state.fillers = finalMetrics.filler;
+  $('#workspace-vague-count').textContent = String(metrics.vague);
+  $('#workspace-filler-count').textContent = String(metrics.filler);
+  $('#workspace-hesitation-count').textContent = String(metrics.hesitation);
+  $('#workspace-density').textContent = metrics.totalChars ? `${metrics.density}%` : '--';
+  $('#workspace-speed').textContent = metrics.totalChars && state.seconds ? `${metrics.speed}` : '--';
   $('#workspace-pause-count').textContent = String(state.pauses);
+  $('#practice-vague-count').textContent = String(metrics.vague);
+  $('#practice-filler-count').textContent = String(metrics.filler);
+  $('#practice-hesitation-count').textContent = String(metrics.hesitation);
+  $('#practice-density').textContent = metrics.totalChars ? `${metrics.density}%` : '--';
+  $('#practice-speed').textContent = metrics.totalChars && state.seconds ? `${metrics.speed}` : '--';
+  $('#practice-pause-count').textContent = String(state.pauses);
   const scene = currentScene();
   const completed = Math.min(state.stageIndex, scene.stages.length);
   const nextStage = scene.stages[completed] || '复盘';
   $('#workspace-next-step').textContent = state.topic ? (completed >= scene.stages.length ? '可结束并复盘' : `补充${nextStage}`) : '等待开始';
   renderWorkspaceFeedback();
+}
+
+function countTerms(text, terms) {
+  return terms.reduce((total, term) => total + text.split(term).length - 1, 0);
+}
+
+function calculateMetrics(includeInterim = true) {
+  const finalText = state.transcript.join('');
+  const text = includeInterim ? `${finalText}${state.interimTranscript || ''}` : finalText;
+  const totalChars = text.replace(/\s/g, '').length;
+  const vague = countTerms(text, ANALYSIS_TERMS.vague);
+  const filler = countTerms(text, ANALYSIS_TERMS.filler);
+  const hesitation = countTerms(text, ANALYSIS_TERMS.hesitation);
+  const removedChars = ANALYSIS_TERMS.filler.reduce((total, term) => total + countTerms(text, [term]) * term.length, 0)
+    + ANALYSIS_TERMS.hesitation.reduce((total, term) => total + countTerms(text, [term]) * term.length, 0);
+  const density = totalChars ? Math.max(0, Math.round(((totalChars - removedChars) / totalChars) * 100)) : 0;
+  const speed = state.seconds ? Math.round((totalChars / state.seconds) * 60) : 0;
+  return { totalChars, vague, filler, hesitation, density, speed };
 }
 
 function renderWorkspaceFeedback() {
@@ -185,6 +226,7 @@ function renderWorkspaceFeedback() {
   const status = $('#workspace-feedback-status');
   const scene = currentScene();
   const completed = Math.min(state.stageIndex, scene.stages.length);
+  const metrics = calculateMetrics();
   if (!state.topic) {
     status.textContent = '等待开始';
     const emptyMarkup = '<div class="feedback-empty"><strong>还没有开始表达</strong><br />先选择一个问题或主题，开始后这里会实时提示下一步。</div>';
@@ -192,7 +234,7 @@ function renderWorkspaceFeedback() {
     if (practiceContainer) practiceContainer.innerHTML = '';
     return;
   }
-  if (!state.transcript.length) {
+  if (!state.transcript.length && !state.interimTranscript) {
     status.textContent = '待开始';
     const readyMarkup = `<div class="feedback-empty"><strong>主题已准备好</strong><br />点击“开始表达”，先完成「${escapeHtml(scene.stages[0])}」。</div>`;
     container.innerHTML = readyMarkup;
@@ -202,12 +244,153 @@ function renderWorkspaceFeedback() {
   status.textContent = '分析中';
   const feedbackItems = [
     { label: '结构进度', value: `${completed} / ${scene.stages.length} 段`, note: completed >= scene.stages.length ? '结构已完整' : `下一步：${scene.stages[completed]}` },
-    { label: '表达密度', value: `${Math.max(72, 96 - state.fillers * 4)}%`, note: state.fillers ? '少用“然后、就是”等填充词' : '目前表达比较集中' },
+    { label: '表达密度', value: `${metrics.density}%`, note: metrics.filler ? '少用“然后、就是”等填充词' : '目前表达比较集中' },
     { label: '节奏提醒', value: `${state.pauses} 次停顿`, note: state.pauses >= 2 ? '停顿节奏比较稳定' : '在结构切换处留半秒' }
   ];
   const feedbackMarkup = feedbackItems.map(item => `<div class="feedback-item"><div><span>${item.label}</span><strong>${item.value}</strong></div><small>${item.note}</small></div>`).join('');
   container.innerHTML = feedbackMarkup;
   if (practiceContainer) practiceContainer.innerHTML = `<div class="practice-feedback-title">实时分析</div>${feedbackMarkup}`;
+}
+
+function renderTranscript() {
+  const transcriptMarkup = state.transcript.map((line, index) => `<p class="${index === state.transcript.length - 1 && !state.interimTranscript ? 'active-line' : 'old-line'}">${escapeHtml(line)}</p>`).join('');
+  const interimMarkup = state.interimTranscript ? `<p class="interim-line">${escapeHtml(state.interimTranscript)}</p>` : '';
+  $('#transcript').innerHTML = transcriptMarkup || interimMarkup || '<p class="transcript-placeholder">准备好后，按下开始表达</p>';
+  const latestLine = state.interimTranscript || state.transcript[state.transcript.length - 1];
+  $('#workspace-transcript').innerHTML = latestLine ? `<p>${escapeHtml(latestLine)}</p>` : '<p>点击下方按钮开始表达</p>';
+}
+
+function recognitionConstructor() {
+  return window.SpeechRecognition || window.webkitSpeechRecognition;
+}
+
+async function startMediaRecorder() {
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    if (!state.isListening) {
+      stream.getTracks().forEach(track => track.stop());
+      return;
+    }
+    state.audioStream = stream;
+    const options = typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : undefined;
+    const recorder = new MediaRecorder(stream, options);
+    state.mediaRecorder = recorder;
+    state.recordedChunks = [];
+    recorder.ondataavailable = event => {
+      if (event.data.size) state.recordedChunks.push(event.data);
+    };
+    recorder.onstop = () => {
+      if (!state.recordedChunks.length) return;
+      if (state.recordingUrl) URL.revokeObjectURL(state.recordingUrl);
+      state.recordingUrl = URL.createObjectURL(new Blob(state.recordedChunks, { type: recorder.mimeType || 'audio/webm' }));
+      $('#recording-audio').src = state.recordingUrl;
+      $('#recording-preview').classList.remove('is-hidden');
+    };
+    recorder.start(250);
+  } catch (error) {
+    showToast('麦克风录音不可用，但仍可尝试语音转文字');
+  }
+}
+
+function stopExpression(silent = false) {
+  const wasListening = state.isListening;
+  state.isListening = false;
+  if (state.recognition) {
+    state.recognition.onend = null;
+    try { state.recognition.stop(); } catch (error) { /* recognition may already be stopped */ }
+    state.recognition = null;
+  }
+  if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
+    state.mediaRecorder.stop();
+  }
+  if (state.audioStream) {
+    state.audioStream.getTracks().forEach(track => track.stop());
+    state.audioStream = null;
+  }
+  state.mediaRecorder = null;
+  clearInterval(timerId);
+  if (!silent && wasListening) {
+    $('#recording-label').textContent = '已停止';
+    $('#begin-expression-button').textContent = '🎙️ 继续表达';
+    showToast('录音已停止，可以继续表达或结束练习');
+  }
+}
+
+function beginExpression() {
+  if (state.timeReached) return showToast('目标时长已到，请结束练习查看复盘');
+  if (state.isListening) return stopExpression();
+  const Recognition = recognitionConstructor();
+  if (!Recognition) return showToast('当前浏览器不支持语音识别，请使用 Chrome 或 Edge');
+  const recognition = new Recognition();
+  recognition.lang = 'zh-CN';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+  recognition.onresult = event => {
+    if (state.isPaused) return;
+    let interim = '';
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const result = event.results[index];
+      const text = result[0].transcript.trim();
+      if (result.isFinal) {
+        commitTranscript(text, Date.now());
+      } else {
+        interim += text;
+      }
+    }
+    state.interimTranscript = interim;
+    renderTranscript();
+    $('#word-count').textContent = `${calculateMetrics().totalChars} 字`;
+    updateWorkspaceStats();
+  };
+  recognition.onerror = event => {
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      stopExpression(true);
+      $('#recording-label').textContent = '未获麦克风权限';
+      showToast('请允许浏览器使用麦克风后，再点击开始表达');
+    } else if (event.error !== 'no-speech') {
+      showToast(`语音识别暂时不可用：${event.error}`);
+    }
+  };
+  recognition.onend = () => {
+    if (state.isListening && !state.isPaused && state.recognition === recognition) {
+      try { recognition.start(); } catch (error) { /* browser may be restarting recognition */ }
+    }
+  };
+  try {
+    recognition.start();
+    state.recognition = recognition;
+    state.isListening = true;
+    state.isPaused = false;
+    $('#recording-label').textContent = '录音中';
+    $('#begin-expression-button').textContent = '⏹ 停止表达';
+    startTimer();
+    startMediaRecorder();
+    showToast('开始录音，请直接说话');
+  } catch (error) {
+    showToast('无法启动语音识别，请检查浏览器麦克风权限');
+  }
+}
+
+function commitTranscript(text, observedAt = Date.now(), simulated = false) {
+  const cleanText = text.trim();
+  if (!cleanText) return;
+  if (simulated || (state.lastFinalAt && observedAt - state.lastFinalAt > 1200)) state.pauses += 1;
+  state.transcript.push(cleanText);
+  state.interimTranscript = '';
+  state.lastFinalAt = observedAt;
+  const scene = currentScene();
+  state.stageIndex = Math.min(state.stageIndex + 1, scene.stages.length);
+  renderTranscript();
+  updateWorkspaceStats();
+  renderPracticeSteps();
+  const nextIndex = Math.min(state.stageIndex, scene.stages.length - 1);
+  const hints = scene.hints || [];
+  $('#coach-hint').textContent = state.stageIndex >= scene.stages.length ? '可以收尾了' : (hints[nextIndex] || scene.hint);
+  $('#coach-subtext').textContent = state.stageIndex >= scene.stages.length ? '把最重要的一句话再收束一下。' : '继续往前说，下一步会在这里提醒你。';
+  $('#begin-expression-button').textContent = state.stageIndex >= scene.stages.length ? '✓ 表达结构已完成' : '⏹ 停止表达';
+  $('#begin-expression-button').disabled = state.stageIndex >= scene.stages.length;
 }
 
 function readHistory() {
@@ -310,7 +493,7 @@ function renderLogicChain(scene, completed) {
 
 function renderRhythm(scene, completed) {
   const duration = Math.max(state.seconds, 42);
-  const words = state.words || 86;
+  const words = state.words;
   const speed = Math.round((words / duration) * 60);
   const pausePattern = state.pauses >= 3 ? '停顿偏多' : state.pauses === 2 ? '节奏稳定' : '可再停顿';
   const emphasis = completed >= scene.stages.length ? '强调结果' : `强调${scene.stages[completed] || '结论'}`;
@@ -329,7 +512,7 @@ function renderRhythm(scene, completed) {
 function renderSentenceAnalysis(scene) {
   const lines = state.transcript;
   if (!lines.length) {
-    $('#sentence-analysis').innerHTML = '<p class="sentence-empty">本次没有产生可分析的字幕句子，下一次可以先模拟说一句。</p>';
+    $('#sentence-analysis').innerHTML = '<p class="sentence-empty">本次没有产生可分析的转写句子，请允许麦克风权限后再开始表达。</p>';
     return;
   }
   $('#sentence-analysis').innerHTML = lines.map((line, index) => {
@@ -346,6 +529,7 @@ function setView(view) {
 }
 
 function resetSession() {
+  stopExpression(true);
   state.stageIndex = 0;
   state.isPaused = false;
   state.timeReached = false;
@@ -354,11 +538,22 @@ function resetSession() {
   state.fillers = 0;
   state.pauses = 0;
   state.transcript = [];
+  state.interimTranscript = '';
+  state.lastFinalAt = null;
+  state.recordedChunks = [];
+  if (state.recordingUrl) {
+    URL.revokeObjectURL(state.recordingUrl);
+    state.recordingUrl = '';
+  }
+  $('#recording-preview').classList.add('is-hidden');
+  $('#recording-audio').removeAttribute('src');
+  $('#recording-audio').load();
   $('#timer').textContent = '00:00';
   $('#workspace-timer').textContent = '00:00';
   $('#timer').classList.remove('time-reached');
   updateTimeProgress();
-  $('#recording-label').textContent = '表达中';
+  $('#recording-label').textContent = '待开始';
+  $('#pause-button').innerHTML = '<span>Ⅱ</span> 暂停';
   $('#transcript').innerHTML = '<p class="transcript-placeholder">准备好后，按下开始表达</p>';
   $('#workspace-transcript').innerHTML = '<p>点击下方按钮开始表达</p>';
   $('#begin-expression-button').textContent = '🎙️ 开始表达';
@@ -374,12 +569,13 @@ let timerId;
 function startTimer() {
   clearInterval(timerId);
   timerId = setInterval(() => {
-    if (!state.isPaused) {
+    if (!state.isPaused && state.isListening) {
       state.seconds += 1;
       if (state.seconds >= state.duration) {
         state.seconds = state.duration;
         state.timeReached = true;
         state.isPaused = true;
+        stopExpression(true);
         $('#recording-label').textContent = '时间到';
         $('#timer').classList.add('time-reached');
         $('#pause-button').innerHTML = '<span>✓</span> 已到时长';
@@ -406,8 +602,7 @@ function startPractice() {
   $('#coach-subtext').textContent = scene.subtext;
   renderPracticeSteps();
   setView('practice');
-  startTimer();
-  showToast('练习开始，跟着下一步表达即可');
+  showToast('练习已准备好，点击“开始表达”开启麦克风');
 }
 
 const MOCK_LINES_BY_SCENE = {
@@ -484,47 +679,31 @@ const FOLLOWUP_QUESTIONS = {
 
 function simulateSentence() {
   if (state.isPaused) return showToast('当前已暂停，继续后再说一句');
+  if (!state.isListening) {
+    state.isListening = true;
+    $('#recording-label').textContent = '模拟表达';
+    $('#begin-expression-button').textContent = '⏹ 停止表达';
+    startTimer();
+  }
   const scene = currentScene();
   const lines = MOCK_LINES_BY_SCENE[scene.id] || MOCK_LINES_BY_SCENE.interview;
   const line = lines[Math.min(state.stageIndex, lines.length - 1)];
-  const transcript = $('#transcript');
-  const placeholder = transcript.querySelector('.transcript-placeholder');
-  if (placeholder) placeholder.remove();
-  $$('#transcript .active-line').forEach(lineElement => lineElement.classList.replace('active-line', 'old-line'));
-  const lineElement = document.createElement('p');
-  lineElement.className = 'active-line';
-  lineElement.textContent = line;
-  transcript.appendChild(lineElement);
-  const workspaceTranscript = $('#workspace-transcript');
-  if (workspaceTranscript) {
-    workspaceTranscript.innerHTML = `<p>${escapeHtml(line)}</p>`;
-  }
-  state.transcript.push(line);
-  state.words += line.replace(/[^\u4e00-\u9fff\w]/g, '').length;
-  state.fillers += state.stageIndex === 1 ? 1 : 0;
-  state.pauses += 1;
-  state.stageIndex = Math.min(state.stageIndex + 1, scene.stages.length);
+  commitTranscript(line, Date.now(), true);
   $('#word-count').textContent = `${state.words} 字`;
   $('#pause-count').textContent = `${state.pauses} 次停顿`;
-  $('#density-stat').textContent = `${Math.max(72, 96 - state.fillers * 4)}%`;
+  $('#density-stat').textContent = `${calculateMetrics(false).density}%`;
   $('#filler-stat').textContent = String(state.fillers);
-  updateWorkspaceStats();
-  renderPracticeSteps();
-  const nextIndex = Math.min(state.stageIndex, scene.stages.length - 1);
-  const hints = scene.hints || [];
-  $('#coach-hint').textContent = state.stageIndex >= scene.stages.length ? '可以收尾了' : (hints[nextIndex] || scene.hint);
-  $('#coach-subtext').textContent = state.stageIndex >= scene.stages.length ? '把最重要的一句话再收束一下。' : '继续往前说，下一步会在这里提醒你。';
-  $('#begin-expression-button').textContent = state.stageIndex >= scene.stages.length ? '✓ 表达结构已完成' : '🎙️ 继续表达';
-  $('#begin-expression-button').disabled = state.stageIndex >= scene.stages.length;
 }
 
 function finishPractice() {
+  stopExpression(true);
+  if (state.interimTranscript.trim()) commitTranscript(state.interimTranscript, Date.now());
   clearInterval(timerId);
   const scene = currentScene();
   const completed = Math.max(1, state.stageIndex);
   const score = Math.round((completed / scene.stages.length) * 100);
   if (state.attempt === 1) {
-    state.firstAttempt = { score, words: state.words || 86, fillers: state.fillers || 2, completed };
+    state.firstAttempt = { score, words: state.words, fillers: state.fillers, completed };
   }
   $('#report-context').textContent = `${scene.name} · ${state.topic}`;
   $('#score-number').textContent = String(score);
@@ -536,11 +715,10 @@ function finishPractice() {
   renderRhythm(scene, completed);
   renderSentenceAnalysis(scene);
   $('#report-duration').textContent = formatTime(Math.max(state.seconds, 42));
-  $('#report-words').textContent = String(state.words || 86);
-  $('#report-fillers').textContent = String(state.fillers || 2);
+  $('#report-words').textContent = String(state.words);
+  $('#report-fillers').textContent = String(state.fillers);
   $('#report-longest-pause').textContent = state.pauses ? '1.4s' : '—';
-  const defaultQuote = (MOCK_LINES_BY_SCENE[scene.id] || MOCK_LINES_BY_SCENE.interview)[0];
-  $('#report-quote-text').textContent = state.transcript[0] || defaultQuote;
+  $('#report-quote-text').textContent = state.transcript[0] || '本次还没有产生录音内容。';
   $('#next-action-title').textContent = completed >= 3 ? '把收尾说得更有力' : '把下一段说具体';
   $('#next-action-description').textContent = completed >= 3 ? '最后不要只说“所以就这样”。用一句行动或结果，把这次表达稳稳收住。' : '不要停在“效果很好”。补上数字、时间或对方的变化，让你的行动真正落地。';
   if (state.attempt === 1) {
@@ -550,7 +728,7 @@ function finishPractice() {
       sceneId: scene.id,
       topic: state.topic,
       score,
-      words: state.words || 86,
+      words: state.words,
       duration: formatTime(Math.max(state.seconds, 42)),
       focus: completed >= scene.stages.length ? '让结论更有力' : `补充${scene.stages[completed] || '具体结果'}`
     });
@@ -558,8 +736,8 @@ function finishPractice() {
   $('#followup-panel').classList.add('is-hidden');
   const comparisonPanel = $('#comparison-panel');
   if (state.attempt > 1 && state.firstAttempt) {
-    const currentWords = state.words || 86;
-    const currentFillers = state.fillers || 2;
+    const currentWords = state.words;
+    const currentFillers = state.fillers;
     const scoreDelta = score - state.firstAttempt.score;
     const wordsDelta = currentWords - state.firstAttempt.words;
     const fillersDelta = currentFillers - state.firstAttempt.fillers;
@@ -590,7 +768,7 @@ function showFollowup() {
 }
 
 function showHistory() {
-  clearInterval(timerId);
+  stopExpression(true);
   renderHistory();
   setView('history');
 }
@@ -758,8 +936,7 @@ function startRerecord() {
   $('#coach-subtext').textContent = '这是第二次表达，试着把刚才的建议用进去。';
   renderPracticeSteps();
   setView('practice');
-  startTimer();
-  showToast('第二次练习开始，结束后会看到两次对比');
+  showToast('第二次练习已准备好，点击“开始表达”开启麦克风');
 }
 
 function showToast(message) {
@@ -771,7 +948,7 @@ function showToast(message) {
 }
 
 function resetDemo() {
-  clearInterval(timerId);
+  stopExpression(true);
   state.sceneId = 'interview';
   state.duration = 180;
   state.attempt = 1;
@@ -795,13 +972,14 @@ $('#structure-select').addEventListener('change', event => {
 });
 $('#start-button').addEventListener('click', startPractice);
 $('#simulate-button').addEventListener('click', simulateSentence);
-$('#begin-expression-button').addEventListener('click', simulateSentence);
+$('#begin-expression-button').addEventListener('click', beginExpression);
 $('#end-button').addEventListener('click', finishPractice);
 $('#pause-button').addEventListener('click', () => {
   if (state.timeReached) return showToast('目标时长已到，请结束练习查看报告');
+  if (!state.isListening) return showToast('请先点击“开始表达”');
   state.isPaused = !state.isPaused;
   $('#pause-button').innerHTML = state.isPaused ? '<span>▶</span> 继续' : '<span>Ⅱ</span> 暂停';
-  $('#recording-label').textContent = state.isPaused ? '已暂停' : '表达中';
+  $('#recording-label').textContent = state.isPaused ? '已暂停' : '录音中';
   showToast(state.isPaused ? '已暂停，想好后继续' : '继续表达');
 });
 document.addEventListener('keydown', event => {
@@ -817,7 +995,7 @@ document.addEventListener('keydown', event => {
   }
 });
 $$('[data-action="back-to-setup"]').forEach(button => button.addEventListener('click', () => {
-  clearInterval(timerId);
+  stopExpression(true);
   state.attempt = 1;
   state.firstAttempt = null;
   setView('setup');

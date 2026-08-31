@@ -17,7 +17,7 @@
           </span>
         </a>
         <div class="topbar-meta">
-          <span class="local-badge"><i></i> 本地演示模式</span>
+          <span class="local-badge"><i></i> 浏览器录音 · 本地原型</span>
           <button class="quiet-button" type="button" data-action="show-history">训练记录</button>
         </div>
       </header>
@@ -144,7 +144,7 @@
             <span class="context-dot">·</span>
             <strong id="practice-topic">如何推动一个跨部门项目</strong>
           </div>
-          <div class="recording-status"><i></i><span id="recording-label">表达中</span><span id="timer">00:00</span><span class="time-target">目标 <span id="target-duration">03:00</span></span></div>
+          <div class="recording-status"><i></i><span id="recording-label">待开始</span><span id="timer">00:00</span><span class="time-target">目标 <span id="target-duration">03:00</span></span></div>
         </div>
         <div class="duration-progress" aria-label="目标时长进度"><i id="time-progress-fill"></i></div>
 
@@ -152,6 +152,15 @@
           <aside class="practice-rail">
             <div class="rail-label">本次结构</div>
             <div id="practice-steps" class="practice-steps"></div>
+            <div class="practice-analysis-heading">表达分析</div>
+            <div class="practice-analysis-list">
+              <div><span>笼统词</span><strong id="practice-vague-count">0</strong></div>
+              <div><span>填充词</span><strong id="practice-filler-count">0</strong></div>
+              <div><span>犹豫词</span><strong id="practice-hesitation-count">0</strong></div>
+              <div><span>表达密度</span><strong id="practice-density">--</strong></div>
+              <div><span>语速</span><strong id="practice-speed">--</strong></div>
+              <div><span>停顿</span><strong id="practice-pause-count">0</strong></div>
+            </div>
             <div class="rail-note">
               <span class="note-icon">✦</span>
               <p>不用一次说完。<br /><strong>跟着下一步走。</strong></p>
@@ -161,7 +170,7 @@
           <div class="transcript-stage">
             <div class="stage-topline">
               <span class="live-caption"><i></i> 实时字幕</span>
-              <span class="offline-note">无需 AI 也能完成练习</span>
+              <span class="offline-note">浏览器内语音识别</span>
             </div>
             <div id="transcript" class="transcript" aria-live="polite">
               <p class="transcript-placeholder">准备好后，按下开始表达</p>
@@ -171,6 +180,10 @@
               <span id="word-count">0 字</span>
               <span class="footer-separator">/</span>
               <span id="pause-count">0 次停顿</span>
+            </div>
+            <div id="recording-preview" class="recording-preview is-hidden">
+              <span>本地录音</span>
+              <audio id="recording-audio" controls></audio>
             </div>
           </div>
 
