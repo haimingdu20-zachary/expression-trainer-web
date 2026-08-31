@@ -289,12 +289,44 @@ function startPractice() {
   showToast('练习开始，跟着下一步表达即可');
 }
 
-const MOCK_LINES = [
-  '当时项目需要在两周内完成，这是整个团队面对的关键任务。',
-  '我先把任务拆成三个阶段，并主动协调了产品和研发同学。',
-  '最后我们提前两天上线，交付周期缩短了约百分之二十。',
-  '这次让我意识到，越复杂的项目越需要先把目标说清楚。'
-];
+const MOCK_LINES_BY_SCENE = {
+  idea: [
+    '我认为这个方案值得尝试，因为它能先解决当前最影响效率的问题。',
+    '第一个原因是执行成本可控，团队不需要一次性改变所有流程。',
+    '比如我们可以先在一个小项目里试运行，再根据结果调整。',
+    '所以我的建议是先做小范围验证，再决定是否全面推进。'
+  ],
+  interview: [
+    '当时项目需要在两周内完成，这是整个团队面对的关键任务。',
+    '我先把任务拆成三个阶段，并主动协调了产品和研发同学。',
+    '最后我们提前两天上线，交付周期缩短了约百分之二十。',
+    '这次让我意识到，越复杂的项目越需要先把目标说清楚。'
+  ],
+  work: [
+    '这周项目整体按计划推进，当前最重要的结果是核心流程已经上线。',
+    '上线前我们完成了三轮验证，主要问题集中在协作交接和数据口径。',
+    '经过调整，处理时间从两天缩短到一天，相关反馈也明显减少。',
+    '下一步我会继续跟踪一周数据，再决定是否扩展到其他团队。'
+  ],
+  meeting: [
+    '针对刚才的问题，我建议今天先确定一个试点范围。',
+    '这样既能回应当前的交付压力，也不会一次性引入太大风险。',
+    '我们可以用一周时间验证结果，再带着数据回来讨论。',
+    '如果大家同意，今天就明确负责人和下一个检查时间。'
+  ],
+  persuasion: [
+    '我建议我们现在调整这个流程，因为继续沿用会持续增加沟通成本。',
+    '目前最明显的影响是重复确认变多，关键任务反而没有更快完成。',
+    '可以先选择一个团队试用新流程，用实际结果验证投入是否值得。',
+    '如果试点有效，我们再把经验整理成方案，逐步推广到其他团队。'
+  ],
+  improv: [
+    '我会选择支持这个做法，因为它能让我们更快得到真实反馈。',
+    '第一个理由是成本较低，第二个理由是调整空间更大。',
+    '比如先让一个小团队试用，就能在扩大之前发现问题。',
+    '所以我的回答是：先小范围尝试，再用结果决定下一步。'
+  ]
+};
 
 const FOLLOWUP_QUESTIONS = {
   idea: [
@@ -332,7 +364,8 @@ const FOLLOWUP_QUESTIONS = {
 function simulateSentence() {
   if (state.isPaused) return showToast('当前已暂停，继续后再说一句');
   const scene = currentScene();
-  const line = MOCK_LINES[Math.min(state.stageIndex, MOCK_LINES.length - 1)];
+  const lines = MOCK_LINES_BY_SCENE[scene.id] || MOCK_LINES_BY_SCENE.interview;
+  const line = lines[Math.min(state.stageIndex, lines.length - 1)];
   const transcript = $('#transcript');
   const placeholder = transcript.querySelector('.transcript-placeholder');
   if (placeholder) placeholder.remove();
@@ -377,7 +410,8 @@ function finishPractice() {
   $('#report-words').textContent = String(state.words || 86);
   $('#report-fillers').textContent = String(state.fillers || 2);
   $('#report-longest-pause').textContent = state.pauses ? '1.4s' : '—';
-  $('#report-quote-text').textContent = state.transcript[0] || '当时项目需要在两周内完成，这是整个团队面对的关键任务。';
+  const defaultQuote = (MOCK_LINES_BY_SCENE[scene.id] || MOCK_LINES_BY_SCENE.interview)[0];
+  $('#report-quote-text').textContent = state.transcript[0] || defaultQuote;
   $('#next-action-title').textContent = completed >= 3 ? '把收尾说得更有力' : '把下一段说具体';
   $('#next-action-description').textContent = completed >= 3 ? '最后不要只说“所以就这样”。用一句行动或结果，把这次表达稳稳收住。' : '不要停在“效果很好”。补上数字、时间或对方的变化，让你的行动真正落地。';
   if (state.attempt === 1) {
