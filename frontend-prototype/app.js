@@ -77,6 +77,7 @@ function renderStructure() {
   const scene = currentScene();
   $('#structure-name').textContent = scene.structure;
   $('#structure-description').textContent = scene.description;
+  $('#workspace-structure').textContent = state.topic ? scene.structure : '等待开始';
   renderPromptSuggestions();
 }
 
@@ -114,6 +115,15 @@ function formatTime(totalSeconds) {
 function updateTimeProgress() {
   const progress = Math.min(100, Math.round((state.seconds / state.duration) * 100));
   $('#time-progress-fill').style.width = `${progress}%`;
+}
+
+function updateWorkspaceStats() {
+  $('#workspace-vague-count').textContent = '0';
+  $('#workspace-filler-count').textContent = String(state.fillers);
+  $('#workspace-hesitation-count').textContent = '0';
+  $('#workspace-density').textContent = state.words ? `${Math.max(72, 96 - state.fillers * 4)}%` : '--';
+  $('#workspace-speed').textContent = state.seconds ? `${Math.round((state.words / state.seconds) * 60)}` : '--';
+  $('#workspace-pause-count').textContent = String(state.pauses);
 }
 
 function readHistory() {
@@ -247,6 +257,7 @@ function renderSentenceAnalysis(scene) {
 
 function setView(view) {
   ['setup', 'practice', 'report', 'history'].forEach(name => $(`#${name}-view`).classList.toggle('is-hidden', name !== view));
+  $('#workspace-view').classList.toggle('is-hidden', !['setup', 'workspace'].includes(view));
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -260,6 +271,7 @@ function resetSession() {
   state.pauses = 0;
   state.transcript = [];
   $('#timer').textContent = '00:00';
+  $('#workspace-timer').textContent = '00:00';
   $('#timer').classList.remove('time-reached');
   updateTimeProgress();
   $('#recording-label').textContent = '表达中';
@@ -268,6 +280,7 @@ function resetSession() {
   $('#pause-count').textContent = '0 次停顿';
   $('#density-stat').textContent = '—';
   $('#filler-stat').textContent = '0';
+  updateWorkspaceStats();
 }
 
 let timerId;
@@ -287,6 +300,7 @@ function startTimer() {
         clearInterval(timerId);
       }
       $('#timer').textContent = formatTime(state.seconds);
+      $('#workspace-timer').textContent = formatTime(state.seconds);
       updateTimeProgress();
     }
   }, 1000);
@@ -403,6 +417,7 @@ function simulateSentence() {
   $('#pause-count').textContent = `${state.pauses} 次停顿`;
   $('#density-stat').textContent = `${Math.max(72, 96 - state.fillers * 4)}%`;
   $('#filler-stat').textContent = String(state.fillers);
+  updateWorkspaceStats();
   renderPracticeSteps();
   const nextIndex = Math.min(state.stageIndex, scene.stages.length - 1);
   const hints = scene.hints || [];
@@ -485,6 +500,14 @@ function showHistory() {
   clearInterval(timerId);
   renderHistory();
   setView('history');
+}
+
+function openSetup() {
+  setView('setup');
+}
+
+function closeSetup() {
+  setView('workspace');
 }
 
 function reportSummaryText() {
@@ -700,6 +723,8 @@ $$('[data-action="back-to-setup"]').forEach(button => button.addEventListener('c
   setView('setup');
 }));
 $$('[data-action="reset"]').forEach(button => button.addEventListener('click', resetDemo));
+$$('[data-action="open-setup"]').forEach(button => button.addEventListener('click', openSetup));
+$$('[data-action="close-setup"]').forEach(button => button.addEventListener('click', closeSetup));
 $$('[data-action="show-history"]').forEach(button => button.addEventListener('click', showHistory));
 $$('[data-action="apply-plan"]').forEach(button => button.addEventListener('click', applyTrainingPlan));
 $$('[data-action="copy-report"]').forEach(button => button.addEventListener('click', copyReport));
@@ -712,3 +737,4 @@ $$('[data-action="next-followup"]').forEach(button => button.addEventListener('c
 renderSceneOptions();
 renderDurationOptions();
 renderStructure();
+updateWorkspaceStats();

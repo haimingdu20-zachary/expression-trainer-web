@@ -22,6 +22,41 @@
         </div>
       </header>
 
+      <section id="workspace-view" class="workspace-view" aria-label="表达训练工作区">
+        <div class="workspace-grid">
+          <aside class="workspace-sidebar analysis-sidebar">
+            <h2>📊 表达分析</h2>
+            <div class="workspace-rule"></div>
+            <div class="analysis-metric"><span>笼统词</span><strong id="workspace-vague-count">0</strong></div>
+            <div class="analysis-metric"><span>填充词</span><strong id="workspace-filler-count">0</strong></div>
+            <div class="analysis-metric"><span>犹豫词</span><strong id="workspace-hesitation-count">0</strong></div>
+            <div class="analysis-metric"><span>表达密度</span><strong id="workspace-density">--</strong></div>
+            <div class="analysis-metric"><span>语速</span><strong id="workspace-speed">--</strong></div>
+            <div class="analysis-metric"><span>停顿</span><strong id="workspace-pause-count">0</strong></div>
+          </aside>
+
+          <section class="workspace-center">
+            <div class="workspace-titlebar">
+              <div class="workspace-brand">叙 / 表达与思维训练</div>
+              <div class="workspace-clock"><span id="workspace-timer">00:00</span><button class="workspace-icon-button" type="button" data-action="open-setup" aria-label="设置本次训练">⚙️</button></div>
+            </div>
+            <div class="workspace-toolbar">
+              <button class="workspace-secondary-button" type="button" data-action="open-setup">📋 粘贴逐字稿</button>
+              <div><span>表达结构</span><strong id="workspace-structure">等待开始</strong></div>
+              <div class="workspace-next-step"><span>下一步</span><strong>等待开始</strong></div>
+            </div>
+            <div class="workspace-transcript"><p>点击下方按钮开始表达</p></div>
+            <button class="workspace-record-button" type="button" data-action="open-setup">🎙️ 开始录制</button>
+          </section>
+
+          <aside class="workspace-sidebar feedback-sidebar">
+            <h2>💡 实时反馈</h2>
+            <div class="workspace-rule"></div>
+            <div class="feedback-empty">开始表达后，<br />这里会出现针对下一步的提醒。</div>
+          </aside>
+        </div>
+      </section>
+
       <section id="setup-view" class="view setup-view" aria-labelledby="setup-title">
         <div class="intro-copy">
           <p class="eyebrow">一场练习，从一个清晰的主题开始</p>
@@ -30,6 +65,7 @@
         </div>
 
         <div class="setup-card">
+          <div class="modal-heading"><span>🎯</span><h2>设置本次训练</h2><button class="modal-close" type="button" data-action="close-setup" aria-label="关闭设置">×</button></div>
           <div class="section-heading">
             <div>
               <span class="step-label">01</span>
