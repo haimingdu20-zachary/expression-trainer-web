@@ -493,6 +493,31 @@ function reportSummaryText() {
   ].join('\n');
 }
 
+function reportData() {
+  const scene = currentScene();
+  return {
+    version: '0.2',
+    scene: { id: scene.id, name: scene.name, structure: scene.structure, stages: scene.stages },
+    topic: state.topic,
+    completedStages: Math.max(1, state.stageIndex),
+    transcript: state.transcript,
+    metrics: {
+      duration: $('#report-duration').textContent,
+      words: Number($('#report-words').textContent),
+      fillers: Number($('#report-fillers').textContent),
+      longestPause: $('#report-longest-pause').textContent,
+      score: Number($('#score-number').textContent),
+      speed: Number($('#report-speed').textContent)
+    },
+    insights: {
+      focus: $('#report-focus').textContent,
+      evidenceStatus: $('#report-evidence-status').textContent,
+      rhythm: $('#report-pause-pattern').textContent,
+      emphasis: $('#report-emphasis').textContent
+    }
+  };
+}
+
 function downloadReport() {
   try {
     const report = `${reportSummaryText()}\n\n表达结构：${currentScene().description}\n练习时长：${$('#report-duration').textContent}\n填充词：${$('#report-fillers').textContent}\n最长停顿：${$('#report-longest-pause').textContent}`;
@@ -509,6 +534,24 @@ function downloadReport() {
     showToast('报告已下载');
   } catch (error) {
     showToast('当前环境无法下载报告');
+  }
+}
+
+function downloadJsonReport() {
+  try {
+    const blob = new Blob([JSON.stringify(reportData(), null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const safeTopic = state.topic.replace(/[^\w\u4e00-\u9fff-]+/g, '-').slice(0, 24) || '表达练习';
+    link.href = url;
+    link.download = `${safeTopic}-结构化报告.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showToast('JSON 报告已下载');
+  } catch (error) {
+    showToast('当前环境无法下载 JSON 报告');
   }
 }
 
@@ -654,6 +697,7 @@ $$('[data-action="show-history"]').forEach(button => button.addEventListener('cl
 $$('[data-action="apply-plan"]').forEach(button => button.addEventListener('click', applyTrainingPlan));
 $$('[data-action="copy-report"]').forEach(button => button.addEventListener('click', copyReport));
 $$('[data-action="download-report"]').forEach(button => button.addEventListener('click', downloadReport));
+$$('[data-action="download-json"]').forEach(button => button.addEventListener('click', downloadJsonReport));
 $$('[data-action="ask-followup"]').forEach(button => button.addEventListener('click', showFollowup));
 $$('[data-action="start-rerecord"]').forEach(button => button.addEventListener('click', startRerecord));
 $$('[data-action="next-followup"]').forEach(button => button.addEventListener('click', advanceFollowup));
