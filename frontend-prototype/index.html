@@ -50,9 +50,20 @@
           </section>
 
           <aside class="workspace-sidebar feedback-sidebar">
-            <h2>💡 实时反馈</h2>
+            <div class="ai-column-heading">
+              <h2>🤖 AI 出题</h2>
+              <span>本地模拟</span>
+            </div>
             <div class="workspace-rule"></div>
-            <div class="feedback-empty">开始表达后，<br />这里会出现针对下一步的提醒。</div>
+            <div class="ai-question-card">
+              <span id="ai-question-kicker" class="ai-question-kicker">根据「面试回答」生成</span>
+              <p id="ai-question">讲一次你解决困难的经历，并说说你从中学到了什么？</p>
+              <div class="ai-question-actions">
+                <button class="ai-secondary-button" type="button" data-action="generate-ai-question">换一道</button>
+                <button class="ai-primary-button" type="button" data-action="use-ai-question">使用这道题 <span>↗</span></button>
+              </div>
+            </div>
+            <div class="ai-question-note">选择问题后，它会自动带入练习主题，你可以直接开始回答或表达。</div>
           </aside>
         </div>
       </section>

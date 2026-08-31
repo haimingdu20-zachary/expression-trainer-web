@@ -16,6 +16,15 @@ const SCENE_PROMPTS = {
   improv: ['你怎么看待远程办公？', '最近学到的一个有用方法', '如果重新选择一次，你会怎么做？']
 };
 
+const AI_QUESTION_BANK = {
+  idea: ['你最近想推动的一个想法是什么？为什么值得现在开始？', '如果只能用一分钟讲清一个复杂概念，你会先说什么？', '一个你坚持的判断，最有力的理由和例子分别是什么？'],
+  interview: ['讲一次你解决困难的经历，你具体做了什么？', '你如何推动一次跨部门协作？最后带来了什么结果？', '说说一次没有达到预期的项目复盘，你后来改变了什么？'],
+  work: ['请汇报一个项目的当前进展、主要风险和下一步计划。', '如果要争取一项资源，你会如何用结论和数据说明必要性？', '这季度最值得汇报的成果是什么？它带来了什么具体变化？'],
+  meeting: ['你建议今天的会议做出什么决定？为什么？', '面对一个会议中的分歧，你会如何回应并推动共识？', '一个需要团队共识的问题，你会怎样提出方案并明确行动？'],
+  persuasion: ['为什么现在应该改变这个流程？请说清影响和收益。', '如何说服团队尝试一个新工具？你的证据和行动是什么？', '一次需要争取支持的提案，你会如何让对方愿意行动？'],
+  improv: ['你怎么看待远程办公？请先给出明确判断。', '最近学到的一个有用方法是什么？为什么值得推荐？', '如果重新选择一次，你会怎么做？请给出两个理由和一个例子。']
+};
+
 const DURATIONS = [
   { value: 60, label: '1 分钟' },
   { value: 120, label: '2 分钟' },
@@ -40,7 +49,8 @@ const state = {
   attempt: 1,
   firstAttempt: null,
   followupIndex: 0,
-  followupComplete: false
+  followupComplete: false,
+  aiQuestionIndex: 0
 };
 
 const $ = selector => document.querySelector(selector);
@@ -87,6 +97,32 @@ function renderStructure() {
   $('#structure-description').textContent = scene.description;
   $('#workspace-structure').textContent = state.topic ? scene.structure : '等待开始';
   renderPromptSuggestions();
+  renderAiQuestion();
+}
+
+function renderAiQuestion() {
+  const scene = currentScene();
+  const questions = AI_QUESTION_BANK[scene.id] || [];
+  const question = questions[state.aiQuestionIndex % questions.length] || '请分享一个你最近想讲清楚的问题。';
+  $('#ai-question-kicker').textContent = `根据「${scene.name}」生成 · ${scene.structure}`;
+  $('#ai-question').textContent = question;
+}
+
+function generateAiQuestion() {
+  const questions = AI_QUESTION_BANK[currentScene().id] || [];
+  state.aiQuestionIndex = (state.aiQuestionIndex + 1) % questions.length;
+  renderAiQuestion();
+  showToast('已生成一道新的练习题');
+}
+
+function useAiQuestion() {
+  const questions = AI_QUESTION_BANK[currentScene().id] || [];
+  const question = questions[state.aiQuestionIndex % questions.length];
+  $('#topic-input').value = question;
+  updateTopicCount();
+  setView('setup');
+  $('#topic-input').focus();
+  showToast('已将问题带入本次练习');
 }
 
 function renderPromptSuggestions() {
@@ -693,6 +729,7 @@ function resetDemo() {
   state.firstAttempt = null;
   state.followupIndex = 0;
   state.followupComplete = false;
+  state.aiQuestionIndex = 0;
   $('#topic-input').value = '';
   updateTopicCount();
   renderSceneOptions();
@@ -738,6 +775,8 @@ $$('[data-action="back-to-setup"]').forEach(button => button.addEventListener('c
 $$('[data-action="reset"]').forEach(button => button.addEventListener('click', resetDemo));
 $$('[data-action="open-setup"]').forEach(button => button.addEventListener('click', openSetup));
 $$('[data-action="close-setup"]').forEach(button => button.addEventListener('click', closeSetup));
+$$('[data-action="generate-ai-question"]').forEach(button => button.addEventListener('click', generateAiQuestion));
+$$('[data-action="use-ai-question"]').forEach(button => button.addEventListener('click', useAiQuestion));
 $$('[data-action="show-history"]').forEach(button => button.addEventListener('click', showHistory));
 $$('[data-action="apply-plan"]').forEach(button => button.addEventListener('click', applyTrainingPlan));
 $$('[data-action="copy-report"]').forEach(button => button.addEventListener('click', copyReport));
