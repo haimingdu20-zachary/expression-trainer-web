@@ -111,6 +111,11 @@ function formatTime(totalSeconds) {
   return `${minutes}:${seconds}`;
 }
 
+function updateTimeProgress() {
+  const progress = Math.min(100, Math.round((state.seconds / state.duration) * 100));
+  $('#time-progress-fill').style.width = `${progress}%`;
+}
+
 function readHistory() {
   try {
     const records = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
@@ -256,6 +261,7 @@ function resetSession() {
   state.transcript = [];
   $('#timer').textContent = '00:00';
   $('#timer').classList.remove('time-reached');
+  updateTimeProgress();
   $('#recording-label').textContent = '表达中';
   $('#transcript').innerHTML = '<p class="transcript-placeholder">准备好后，按下开始表达</p>';
   $('#word-count').textContent = '0 字';
@@ -281,6 +287,7 @@ function startTimer() {
         clearInterval(timerId);
       }
       $('#timer').textContent = formatTime(state.seconds);
+      updateTimeProgress();
     }
   }, 1000);
 }

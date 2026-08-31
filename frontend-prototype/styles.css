@@ -83,6 +83,8 @@ h1, h2, p { margin-top: 0; }
 
 .practice-view, .report-view { max-width: 1300px; margin: 0 auto; padding-top: 0; }
 .practice-header { height: 74px; }
+.duration-progress { height: 3px; overflow: hidden; margin-top: 15px; border-radius: 99px; background: #e3eae4; }
+.duration-progress i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--coral); transition: width .4s linear; }
 .practice-context { display: flex; gap: 9px; align-items: center; color: var(--muted); font-size: 11px; }
 .practice-context strong { color: var(--ink); font-size: 12px; }
 .context-dot { color: #c2c9c3; }
