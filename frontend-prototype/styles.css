@@ -118,6 +118,9 @@ h1, h2, p { margin-top: 0; }
 .transcript p.active-line { color: var(--ink); }
 .transcript p.old-line { color: #b7c0b9; font-size: 18px; }
 .transcript-placeholder { color: #c4ccc5 !important; font-family: inherit !important; font-size: 14px !important; }
+.begin-expression-button { align-self: center; min-width: 190px; margin: 0 auto 21px; padding: 13px 22px; border: 0; border-radius: 999px; background: var(--coral); color: #fff; font-size: 13px; font-weight: 700; transition: .2s ease; }
+.begin-expression-button:hover { background: #c9654d; transform: translateY(-1px); }
+.begin-expression-button:disabled { cursor: default; opacity: .45; transform: none; }
 .stage-footer { padding-top: 20px; border-top: 1px solid var(--line); }
 .footer-separator { margin: 0 8px; color: #c2c9c3; }
 .coach-panel { padding: 37px 29px; border-left: 1px solid var(--line); background: #f4faf5; }
@@ -421,6 +424,8 @@ body { background: #000; color: #ececec; }
 .practice-rail, .coach-panel { border-color: #303030; background: #151515; }
 .transcript-stage { background: #080808; }
 .transcript-stage .stage-topline, .transcript-stage .stage-footer, .practice-context, .recording-status #timer { color: #888; }
+.begin-expression-button { background: #ed008c; box-shadow: 0 8px 25px rgba(237, 0, 140, .2); }
+.begin-expression-button:hover { background: #ff1ba5; }
 .transcript p { color: #666; }
 .transcript p.active-line { color: #eee; }
 .transcript p.old-line { color: #888; }

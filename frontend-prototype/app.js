@@ -320,6 +320,8 @@ function resetSession() {
   updateTimeProgress();
   $('#recording-label').textContent = '表达中';
   $('#transcript').innerHTML = '<p class="transcript-placeholder">准备好后，按下开始表达</p>';
+  $('#begin-expression-button').textContent = '🎙️ 开始表达';
+  $('#begin-expression-button').disabled = false;
   $('#word-count').textContent = '0 字';
   $('#pause-count').textContent = '0 次停顿';
   $('#density-stat').textContent = '—';
@@ -467,6 +469,8 @@ function simulateSentence() {
   const hints = scene.hints || [];
   $('#coach-hint').textContent = state.stageIndex >= scene.stages.length ? '可以收尾了' : (hints[nextIndex] || scene.hint);
   $('#coach-subtext').textContent = state.stageIndex >= scene.stages.length ? '把最重要的一句话再收束一下。' : '继续往前说，下一步会在这里提醒你。';
+  $('#begin-expression-button').textContent = state.stageIndex >= scene.stages.length ? '✓ 表达结构已完成' : '🎙️ 继续表达';
+  $('#begin-expression-button').disabled = state.stageIndex >= scene.stages.length;
 }
 
 function finishPractice() {
@@ -746,6 +750,7 @@ $('#structure-select').addEventListener('change', event => {
 });
 $('#start-button').addEventListener('click', startPractice);
 $('#simulate-button').addEventListener('click', simulateSentence);
+$('#begin-expression-button').addEventListener('click', simulateSentence);
 $('#end-button').addEventListener('click', finishPractice);
 $('#pause-button').addEventListener('click', () => {
   if (state.timeReached) return showToast('目标时长已到，请结束练习查看报告');
