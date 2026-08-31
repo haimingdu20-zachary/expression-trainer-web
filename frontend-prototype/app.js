@@ -632,7 +632,13 @@ $('#pause-button').addEventListener('click', () => {
   showToast(state.isPaused ? '已暂停，想好后继续' : '继续表达');
 });
 document.addEventListener('keydown', event => {
-  if (event.code === 'Space' && !$('#practice-view').classList.contains('is-hidden')) {
+  const practiceVisible = !$('#practice-view').classList.contains('is-hidden');
+  if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && practiceVisible) {
+    event.preventDefault();
+    $('#simulate-button').click();
+    return;
+  }
+  if (event.code === 'Space' && practiceVisible) {
     event.preventDefault();
     $('#pause-button').click();
   }
