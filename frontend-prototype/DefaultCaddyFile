@@ -1,0 +1,28 @@
+:8000 {
+    root * .
+    # 禁止访问敏感路径
+    @unsafePath {
+      path /.git/* /node_modules/* /vendor/* /.venv/*
+    }
+    respond @unsafePath 404
+    # 为不同文件类型配置缓存策略
+    @staticAssets {
+      path *.css *.js *.png *.jpg *.jpeg *.gif *.svg *.ico *.webp
+    }
+    @htmlFiles {
+      path *.html
+    }
+    # 静态资源长缓存（1年），但当文件名改变时浏览器会更新
+    header @staticAssets Cache-Control "public, max-age=31536000, immutable"
+    # HTML 不缓存
+    header @htmlFiles Cache-Control "no-cache, no-store, must-revalidate"
+    header @htmlFiles Pragma "no-cache"
+    header @htmlFiles Expires "0"
+    # 可选：默认添加中性缓存头（未被匹配到的文件）
+    header Cache-Control "public, max-age=3600"
+    file_server
+    try_files {path} {path}.html {path}/index.html 404.html index.html
+    log {
+      output stderr
+    }
+}
