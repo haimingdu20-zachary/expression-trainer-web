@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>言序｜表达与思维训练</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 洋红闪烁边框 -->
+  <div class="glow-border"></div>
+
+  <!-- 主布局：三列 -->
+  <div class="layout">
+    <!-- 左栏：表达分析 -->
+    <aside class="panel-left">
+      <div class="panel-title">📊 表达分析</div>
+      <div class="stat-row">
+        <span class="stat-label">笼统词</span>
+        <span id="stat-vague" class="stat-value stat-red">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">填充词</span>
+        <span id="stat-fillers" class="stat-value stat-orange">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">犹豫词</span>
+        <span id="stat-hedges" class="stat-value stat-yellow">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">表达密度</span>
+        <span id="stat-density" class="stat-value stat-green">--</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">语速</span>
+        <span id="stat-rate" class="stat-value stat-blue">--</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">停顿</span>
+        <span id="stat-pauses" class="stat-value stat-blue">0</span>
+      </div>
+    </aside>
+
+    <!-- 中间：主内容区 -->
+    <main class="main-area">
+      <!-- 顶部栏 -->
+      <div class="topbar">
+        <span class="app-title">言序｜表达与思维训练</span>
+        <div class="topbar-right">
+          <span id="timer" class="timer">00:00</span>
+          <button id="btn-prompt-editor" class="btn-icon" title="训练规则">🎯</button>
+          <button id="btn-settings" class="btn-icon" title="设置">⚙️</button>
+        </div>
+      </div>
+
+      <!-- 字幕区顶部工具栏 -->
+      <div class="subtitle-topbar">
+        <button id="btn-paste" class="btn-sm btn-paste-top">
+          <span>📋</span> 粘贴逐字稿
+        </button>
+        <div class="subtitle-topbar-right">
+          <button id="btn-copy-text" class="btn-sm hidden" title="复制原文">📋 复制</button>
+          <button id="btn-save-text" class="btn-sm hidden" title="保存原文">💾 保存</button>
+          <button id="btn-clear" class="btn-sm hidden" title="清空">🗑️ 清空</button>
+        </div>
+      </div>
+
+      <div class="training-strip">
+        <div>
+          <div class="training-label">表达结构</div>
+          <div id="stage-progress" class="stage-progress"></div>
+        </div>
+        <div class="coach-cue-wrap">
+          <span class="training-label">下一步</span>
+          <strong id="coach-cue">等待开始</strong>
+        </div>
+      </div>
+
+      <!-- 字幕滚动区 -->
+      <div id="subtitle-scroll" class="subtitle-scroll">
+        <div id="subtitle-container" class="subtitle-container">
+          <div class="subtitle-line hint">点击下方按钮开始说话</div>
+        </div>
+      </div>
+
+      <!-- 底部按钮（只保留核心操作） -->
+      <div class="action-bar">
+        <button id="btn-start" class="btn-main btn-start">
+          <span class="btn-icon-inner">🎤</span>
+          <span class="btn-label">开始录制</span>
+        </button>
+        <button id="btn-pause" class="btn-main btn-pause hidden">
+          <span class="btn-icon-inner">⏸️</span>
+          <span class="btn-label">暂停</span>
+        </button>
+        <button id="btn-resume" class="btn-main btn-resume hidden">
+          <span class="btn-icon-inner">▶️</span>
+          <span class="btn-label">继续</span>
+        </button>
+        <button id="btn-stop" class="btn-main btn-stop hidden">
+          <span class="btn-icon-inner">⏹️</span>
+          <span class="btn-label">结束</span>
+        </button>
+        <button id="btn-report" class="btn-main btn-report hidden">
+          <span class="btn-icon-inner">📋</span>
+          <span class="btn-label">生成报告</span>
+        </button>
+        <button id="btn-followup" class="btn-main btn-followup hidden">
+          <span class="btn-icon-inner">❓</span>
+          <span class="btn-label">AI追问</span>
+        </button>
+        <button id="btn-compare" class="btn-main btn-compare hidden">
+          <span class="btn-icon-inner">🔁</span>
+          <span class="btn-label">前后对比</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- 右栏：实时反馈 -->
+    <aside class="panel-right">
+      <div class="panel-title">💡 实时反馈</div>
+      <div class="ai-question-panel">
+        <div class="ai-question-heading"><strong>🤖 AI 出题</strong><small id="question-kicker">根据「讲清一个想法」生成 · 本地题库</small></div>
+        <p id="question-text">你最近想推动的一个想法是什么？为什么值得现在开始？</p>
+        <div class="ai-question-actions">
+          <button id="btn-next-question" class="btn-sm">换一道</button>
+          <button id="btn-ai-question" class="btn-sm">AI生成</button>
+          <button id="btn-use-question" class="btn-sm ai-use-question">使用这道题</button>
+        </div>
+      </div>
+      <div id="feedback-content" class="feedback-content">
+        <!-- 实时反馈内容 -->
+      </div>
+    </aside>
+  </div>
+
+  <!-- 训练设置弹窗 -->
+  <div id="session-modal" class="modal hidden">
+    <div class="modal-content session-modal-content">
+      <div class="modal-header">
+        <h2>🎯 设置本次训练</h2>
+        <button id="btn-cancel-session" class="btn-close">×</button>
+      </div>
+      <div class="modal-body session-form">
+        <label>训练场景
+          <select id="session-scenario">
+            <option value="idea">讲清一个想法</option>
+            <option value="interview">面试回答</option>
+            <option value="briefing">工作汇报 / 述职</option>
+            <option value="meeting">会议发言 / 推动决策</option>
+            <option value="persuasion">说服沟通 / 提案</option>
+            <option value="impromptu">即兴表达 / 随机回答</option>
+          </select>
+        </label>
+        <label>表达主题
+          <input id="session-topic" placeholder="例如：我为什么建议推进这个方案">
+        </label>
+        <label>表达结构
+          <select id="session-structure">
+            <option value="prep">观点表达：结论→原因→例子→总结</option>
+            <option value="briefing">工作汇报：结论→数据/原因→风险→行动</option>
+            <option value="interview">面试回答：情境/任务→行动→结果→复盘</option>
+            <option value="persuasion">说服表达：问题/主张→影响→方案→行动</option>
+            <option value="meeting">会议发言：回应/判断→理由/影响→方案/依据→决策/行动</option>
+            <option value="impromptu">即兴表达：明确回答→两个理由→具体例子→简短收尾</option>
+          </select>
+        </label>
+        <label>目标时长（秒）
+          <input id="session-duration" type="number" min="15" max="600" value="60">
+        </label>
+        <button id="btn-confirm-session" class="btn-session-confirm">开始训练</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 耳机DJ少女 icon -->
+  <div class="girl-icon">
+    <svg width="44" height="44" viewBox="0 0 70 70" fill="none">
+      <path d="M16 32 Q16 14 35 12 Q54 14 54 32" stroke="#E5007E" stroke-width="2.5" fill="none"/>
+      <rect x="12" y="30" width="7" height="12" rx="3" fill="#E5007E" opacity="0.6"/>
+      <rect x="51" y="30" width="7" height="12" rx="3" fill="#E5007E" opacity="0.6"/>
+      <circle cx="35" cy="38" r="14" stroke="#E5007E" stroke-width="2" fill="none"/>
+      <path d="M28 36 Q32 33 36 36" stroke="#E5007E" stroke-width="1.5" fill="none"/>
+      <path d="M38 36 Q41 34 44 37" stroke="#E5007E" stroke-width="1.5" fill="none"/>
+      <circle cx="32" cy="35.5" r="1.2" fill="#E5007E"/>
+      <path d="M31 43 Q35 46 39 43" stroke="#E5007E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <!-- 粘贴逐字稿弹窗 -->
+  <div id="paste-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📋 粘贴逐字稿</h2>
+        <button id="btn-close-paste" class="btn-close">×</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
+        <p style="color:#888;font-size:13px;">把逐字稿粘贴进来，我帮你分析</p>
+        <textarea id="paste-textarea" placeholder="在这里粘贴文字..." style="flex:1;min-height:300px;background:#0a0a0a;border:1px solid #333;border-radius:8px;padding:16px;color:#fff;font-size:14px;line-height:1.8;resize:none;font-family:inherit;"></textarea>
+        <button id="btn-analyze-paste" style="background:#E5007E;color:#fff;border:none;border-radius:8px;padding:12px 20px;font-size:14px;cursor:pointer;align-self:flex-end;">🔍 开始分析</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 报告弹窗 -->
+  <div id="report-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📋 表达分析报告</h2>
+        <div class="modal-header-actions">
+          <button id="btn-copy-report" class="btn-sm">📋 复制全文</button>
+          <button id="btn-close-report" class="btn-close">×</button>
+        </div>
+      </div>
+      <div id="report-body" class="modal-body">
+      </div>
+    </div>
+  </div>
+
+  <!-- 重录对比弹窗 -->
+  <div id="compare-modal" class="modal hidden">
+    <div class="modal-content compare-modal-content">
+      <div class="modal-header">
+        <h2>🔁 两次表达对比</h2>
+        <button id="btn-close-compare" class="btn-close">×</button>
+      </div>
+      <div id="compare-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

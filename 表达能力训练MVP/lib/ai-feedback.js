@@ -1,0 +1,193 @@
+/**
+ * AI反馈模块 - 支持多后端
+ * 支持 DeepSeek / OpenAI / Ollama / 自定义 OpenAI 兼容接口
+ */
+
+const { getRealtimePrompt, getReportPrompt, getFollowupPrompt, getQuestionPrompt } = require('./prompts');
+
+// 各后端的 API 配置
+const PROVIDER_ENDPOINTS = {
+  openai: 'https://api.openai.com/v1/chat/completions',
+  deepseek: 'https://api.deepseek.com/v1/chat/completions'
+};
+
+/**
+ * 发送请求到 OpenAI 兼容接口
+ */
+async function callAPI(endpoint, apiKey, model, messages, maxTokens = 200) {
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      max_tokens: maxTokens,
+      temperature: 0.7
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`API 请求失败 (${response.status}): ${error}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+/**
+ * 获取endpoint和配置
+ */
+function getProviderConfig(settings) {
+  const { provider, apiKey, model, ollamaUrl, baseUrl, customModel } = settings;
+
+  switch (provider) {
+    case 'openai':
+      return {
+        endpoint: PROVIDER_ENDPOINTS.openai,
+        apiKey,
+        model: model || 'gpt-4o-mini'
+      };
+    case 'deepseek':
+      return {
+        endpoint: PROVIDER_ENDPOINTS.deepseek,
+        apiKey,
+        model: model || 'deepseek-chat'
+      };
+    case 'ollama':
+      return {
+        endpoint: `${ollamaUrl || 'http://localhost:11434'}/v1/chat/completions`,
+        apiKey: 'ollama', // Ollama 不需要真实key但接口需要这个字段
+        model: model || 'qwen2.5:7b'
+      };
+    case 'custom':
+      // 用户输入 BASE URL，自动追加 /chat/completions
+      const base = (baseUrl || '').replace(/\/+$/, '');
+      const endpoint = base ? `${base}/chat/completions` : '';
+      return {
+        endpoint,
+        apiKey: apiKey || '',
+        model: customModel || model || ''
+      };
+    default:
+      throw new Error(`未知的 provider: ${provider}`);
+  }
+}
+
+/**
+ * 发送实时反馈请求
+ * @param {string} text - 当前累积文本
+ * @param {Object} settings - 用户设置
+ * @returns {string} 反馈HTML
+ */
+async function sendFeedback(text, settings, customPrompt, context) {
+  const config = getProviderConfig(settings);
+  const prompt = getRealtimePrompt(text, context, customPrompt);
+
+  const messages = [
+    { role: 'system', content: prompt.system },
+    { role: 'user', content: prompt.user }
+  ];
+
+  const result = await callAPI(config.endpoint, config.apiKey, config.model, messages, 150);
+  return result;
+}
+
+/**
+ * 发送结束报告请求
+ * @param {string} fullText - 完整文本
+ * @param {Object} stats - 统计数据
+ * @param {Object} settings - 用户设置
+ * @returns {string} 报告文本
+ */
+async function sendReport(fullText, stats, settings, customPrompt) {
+  const config = getProviderConfig(settings);
+  const prompt = getReportPrompt(fullText, stats, customPrompt);
+
+  const messages = [
+    { role: 'system', content: prompt.system },
+    { role: 'user', content: prompt.user }
+  ];
+
+  const result = await callAPI(config.endpoint, config.apiKey, config.model, messages, 8192);
+  return result;
+}
+
+async function sendFollowup(text, context, settings, customPrompt) {
+  const config = getProviderConfig(settings);
+  const prompt = getFollowupPrompt(text, context, customPrompt);
+  const result = await callAPI(config.endpoint, config.apiKey, config.model, [
+    { role: 'system', content: prompt.system },
+    { role: 'user', content: prompt.user }
+  ], 120);
+  return result.trim();
+}
+
+async function sendQuestion(context, settings, customPrompt) {
+  const config = getProviderConfig(settings);
+  const prompt = getQuestionPrompt(context, customPrompt);
+  const result = await callAPI(config.endpoint, config.apiKey, config.model, [
+    { role: 'system', content: prompt.system },
+    { role: 'user', content: prompt.user }
+  ], 100);
+  return result.trim();
+}
+
+/**
+ * 将AI返回的纯文本反馈格式化为HTML
+ */
+function formatFeedback(text) {
+  // 简单处理：检测是否包含建议标记
+  let html = text
+    .replace(/→/g, '<span class="suggestion"> → </span>')
+    .replace(/⚠️/g, '<span class="issue">⚠️</span>')
+    .replace(/✓/g, '<span class="suggestion">✓</span>')
+    .replace(/\n/g, '<br>');
+
+  return html;
+}
+
+/**
+ * 测试 LLM 连通性
+ * 发送一条极简请求验证配置是否可用
+ */
+async function testConnection(settings) {
+  const config = getProviderConfig(settings);
+  if (!config.endpoint) {
+    return { success: false, error: '端点地址未配置' };
+  }
+
+  const messages = [
+    { role: 'user', content: 'OK' }
+  ];
+
+  try {
+    const response = await fetch(config.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.apiKey}`
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages,
+        max_tokens: 2,
+        temperature: 0
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text().catch(() => '未知错误');
+      return { success: false, error: `API 请求失败 (${response.status}): ${error}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: `连接失败: ${error.message}` };
+  }
+}
+
+module.exports = { sendFeedback, sendReport, sendFollowup, sendQuestion, testConnection };

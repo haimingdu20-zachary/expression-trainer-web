@@ -1,0 +1,23 @@
+{
+  "name": "expression-trainer",
+  "productName": "言序｜表达与思维训练",
+  "version": "1.0.0",
+  "description": "言序｜表达与思维训练桌面版",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "doctor": "node scripts/check-runtime.js",
+    "test:syntax": "node --check main.js && node --check preload.js && node --check src/app.js && node --check src/settings.js && node --check lib/asr.js && node --check lib/lexicon.js && node --check lib/logic-engine.js && node --check lib/prompts.js && node --check lib/ai-feedback.js",
+    "test": "npm run test:syntax && node --test test/*.test.js"
+  },
+  "keywords": ["expression", "training", "speech", "asr", "chinese"],
+  "author": "sisi",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0"
+  },
+  "dependencies": {
+    "sherpa-onnx-node": "^1.10.0"
+  }
+}
